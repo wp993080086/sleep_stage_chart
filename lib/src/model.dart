@@ -11,9 +11,6 @@ enum SleepStageEnum {
   /// 清醒
   awake,
 
-  /// 未佩戴
-  notWorn,
-
   /// 快速眼动
   rem,
 
@@ -23,10 +20,10 @@ enum SleepStageEnum {
 
 /// 定义一个 Map，用于存储不同睡眠阶段 (SleepStageEnum) 对应的固定颜色
 final Map<SleepStageEnum, Color> stageColors = {
-  SleepStageEnum.light: Color(0xFF54B0FF), // 浅睡阶段
-  SleepStageEnum.deep: Color(0xFF4D58E7), // 深睡阶段
-  SleepStageEnum.rem: Color(0xFF82DDDD), // REM(快速眼动)阶段
-  SleepStageEnum.awake: Color(0xFFFFA877), // 清醒阶段
+  SleepStageEnum.light: const Color(0xFF54B0FF), // 浅睡阶段
+  SleepStageEnum.deep: const Color(0xFF4D58E7), // 深睡阶段
+  SleepStageEnum.rem: const Color(0xFF82DDDD), // REM(快速眼动)阶段
+  SleepStageEnum.awake: const Color(0xFFFFA877), // 清醒阶段
 };
 
 /// 睡眠阶段图表数据详情类
@@ -41,14 +38,14 @@ class SleepStageDetails {
   /// 阶段结束时间
   final DateTime endTime;
 
-  /// 持续时间（分钟）
-  final int duration;
+  /// 详情信息
+  final List<String> info;
 
   SleepStageDetails({
     required this.model,
     required this.startTime,
     required this.endTime,
-    required this.duration,
+    required this.info,
   });
 
   /// 创建测试用的睡眠详情图表数据
@@ -57,7 +54,7 @@ class SleepStageDetails {
       model: SleepStageEnum.light,
       startTime: DateTime.now(),
       endTime: DateTime.now().add(Duration(minutes: 30)),
-      duration: 30,
+      info: const [],
     );
   }
 }
@@ -107,12 +104,10 @@ int getModeByStage(SleepStageEnum stage) {
       return 2;
     case SleepStageEnum.awake:
       return 3;
-    case SleepStageEnum.notWorn:
-      return 4;
     case SleepStageEnum.rem:
-      return 5;
+      return 4;
     case SleepStageEnum.unknown:
-      return -1;
+      return 0;
   }
 }
 
