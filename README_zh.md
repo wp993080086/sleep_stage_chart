@@ -2,8 +2,8 @@
 
 一个 Flutter 插件，用于可视化展示睡眠阶段和睡眠质量数据，同时支持冥想图表展示。兼容 Android、iOS 和 Windows 平台。
 
-![examples 1](./doc/images/sleep.png)
-![examples 1](./doc/images/meditation.png)
+![Sleep Stage Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/sleep.png)
+![Meditation Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/meditation.png)
 
 ## 功能特点
 
@@ -38,7 +38,7 @@ flutter pub get
 
 ### 睡眠阶段图表示例
 
-![examples 1](./doc/images/sleep-tooltip.png)
+![Sleep Stage Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/sleep-tooltip.png)
 
 ```dart
 import 'package:flutter/material.dart';
@@ -89,7 +89,7 @@ class SleepChartExample extends StatelessWidget {
 
 ### 冥想图表示例
 
-![examples 1](./doc/images/meditation-tooltip.png)
+![Meditation Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/meditation-tooltip.png)
 
 ```dart
 import 'package:flutter/material.dart';

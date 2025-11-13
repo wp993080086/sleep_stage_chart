@@ -1,11 +1,11 @@
 # Sleep Stage Chart
 
-[中文文档](./README_zh.md) | English
+[中文文档](https://github.com/wp993080086/sleep_stage_chart/blob/master/README_zh.md)
 
 A Flutter plugin for displaying visual charts of sleep stages and sleep quality data, and also supports meditation charts. Compatible with Android, iOS and Windows platforms.
 
-![examples 1](./doc/images/sleep.png)
-![examples 1](./doc/images/meditation.png)
+![Sleep Stage Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/sleep.png)
+![Meditation Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/meditation.png)
 
 ## Features
 
@@ -40,7 +40,7 @@ Support sleep stage chart and meditation chart.
 
 ### Sleep Stage Chart Example
 
-![examples 1](./doc/images/sleep-tooltip.png)
+![Sleep Stage Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/sleep-tooltip.png)
 
 ```dart
 import 'package:flutter/material.dart';
@@ -91,7 +91,7 @@ class SleepChartExample extends StatelessWidget {
 
 ### Meditation Chart Example
 
-![examples 1](./doc/images/meditation-tooltip.png)
+![Meditation Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/meditation-tooltip.png)
 
 ```dart
 import 'package:flutter/material.dart';
