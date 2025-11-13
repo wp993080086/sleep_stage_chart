@@ -23,7 +23,7 @@
 
 ```yaml
 dependencies:
-  sleep_stage_chart: ^1.1.0
+  sleep_stage_chart: ^1.1.2
 ```
 
 然后执行以下命令：

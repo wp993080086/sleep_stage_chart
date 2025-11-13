@@ -25,7 +25,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  sleep_stage_chart: ^1.1.0
+  sleep_stage_chart: ^1.1.2
 ```
 
 Then run:
