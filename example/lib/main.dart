@@ -319,7 +319,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         .map((v) => Text(v, style: _textStyle))
                         .toList(),
                   ),
-                )
+                ),
               ],
             ),
           )),

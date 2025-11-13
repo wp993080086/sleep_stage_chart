@@ -26,8 +26,7 @@ final Map<SleepStageEnum, Color> stageColors = {
   SleepStageEnum.awake: const Color(0xFFFFA877), // 清醒阶段
 };
 
-/// 睡眠阶段图表数据详情类
-/// 用于存储图表绘制所需的睡眠阶段详细信息
+/// 睡眠阶段图表数据详情类 用于存储图表绘制所需的睡眠阶段详细信息
 class SleepStageDetails {
   /// 睡眠阶段类型
   final SleepStageEnum model;
