@@ -1,6 +1,6 @@
 name: sleep_stage_chart
-description: A Flutter plugin for displaying visualized charts of sleep phases and sleep quality data, supporting both Android and iOS platforms.
-version: 1.1.1
+description: A Flutter plugin for displaying visual charts of sleep stages and sleep quality data, and also supports meditation charts. Compatible with Android, iOS and Windows platforms.
+version: 1.1.2
 homepage: https://github.com/wp993080086/sleep_stage_chart
 repository: https://github.com/wp993080086/sleep_stage_chart
 issue_tracker: https://github.com/wp993080086/sleep_stage_chart/issues

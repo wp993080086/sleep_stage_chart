@@ -1,3 +1,7 @@
+# 1.1.2
+
+* Update the `pubspec.yaml` description.
+
 # 1.1.1
 
 * Update the image path in `README.md` to an absolute path.
