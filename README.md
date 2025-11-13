@@ -1,5 +1,7 @@
 # Sleep Stage Chart
 
+[中文文档](./README_zh.md) | English
+
 A Flutter plugin for displaying visual charts of sleep stages and sleep quality data, and also supports meditation charts. Compatible with Android, iOS and Windows platforms.
 
 ![examples 1](./doc/images/sleep.png)
