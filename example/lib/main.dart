@@ -43,58 +43,58 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return [
       SleepStageDetails(
-        model: SleepStageEnum.awake,
-        startTime: sleepStart,
-        endTime: sleepStart.add(const Duration(minutes: 15)),
-        info: ['清醒'],
+        type: SleepStageEnum.awake,
+        start: sleepStart,
+        end: sleepStart.add(const Duration(minutes: 15)),
+        titles: ['清醒'],
       ),
       SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: sleepStart.add(const Duration(minutes: 15)),
-        endTime: sleepStart.add(const Duration(minutes: 75)),
-        info: ['浅睡'],
+        type: SleepStageEnum.core,
+        start: sleepStart.add(const Duration(minutes: 15)),
+        end: sleepStart.add(const Duration(minutes: 75)),
+        titles: ['浅睡'],
       ),
       SleepStageDetails(
-        model: SleepStageEnum.deep,
-        startTime: sleepStart.add(const Duration(minutes: 75)),
-        endTime: sleepStart.add(const Duration(minutes: 165)),
-        info: ['深睡'],
+        type: SleepStageEnum.deep,
+        start: sleepStart.add(const Duration(minutes: 75)),
+        end: sleepStart.add(const Duration(minutes: 165)),
+        titles: ['深睡'],
       ),
       SleepStageDetails(
-        model: SleepStageEnum.rem,
-        startTime: sleepStart.add(const Duration(minutes: 165)),
-        endTime: sleepStart.add(const Duration(minutes: 225)),
-        info: ['REM'],
+        type: SleepStageEnum.rem,
+        start: sleepStart.add(const Duration(minutes: 165)),
+        end: sleepStart.add(const Duration(minutes: 225)),
+        titles: ['REM'],
       ),
       SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: sleepStart.add(const Duration(minutes: 225)),
-        endTime: sleepStart.add(const Duration(minutes: 285)),
-        info: ['浅睡'],
+        type: SleepStageEnum.core,
+        start: sleepStart.add(const Duration(minutes: 225)),
+        end: sleepStart.add(const Duration(minutes: 285)),
+        titles: ['浅睡'],
       ),
       SleepStageDetails(
-        model: SleepStageEnum.deep,
-        startTime: sleepStart.add(const Duration(minutes: 285)),
-        endTime: sleepStart.add(const Duration(minutes: 375)),
-        info: ['深睡'],
+        type: SleepStageEnum.deep,
+        start: sleepStart.add(const Duration(minutes: 285)),
+        end: sleepStart.add(const Duration(minutes: 375)),
+        titles: ['深睡'],
       ),
       SleepStageDetails(
-        model: SleepStageEnum.rem,
-        startTime: sleepStart.add(const Duration(minutes: 375)),
-        endTime: sleepStart.add(const Duration(minutes: 435)),
-        info: ['REM'],
+        type: SleepStageEnum.rem,
+        start: sleepStart.add(const Duration(minutes: 375)),
+        end: sleepStart.add(const Duration(minutes: 435)),
+        titles: ['REM'],
       ),
       SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: sleepStart.add(const Duration(minutes: 435)),
-        endTime: sleepStart.add(const Duration(minutes: 480)),
-        info: ['浅睡'],
+        type: SleepStageEnum.core,
+        start: sleepStart.add(const Duration(minutes: 435)),
+        end: sleepStart.add(const Duration(minutes: 480)),
+        titles: ['浅睡'],
       ),
       SleepStageDetails(
-        model: SleepStageEnum.awake,
-        startTime: sleepStart.add(const Duration(minutes: 480)),
-        endTime: sleepStart.add(const Duration(minutes: 520)),
-        info: ['清醒'],
+        type: SleepStageEnum.awake,
+        start: sleepStart.add(const Duration(minutes: 480)),
+        end: sleepStart.add(const Duration(minutes: 520)),
+        titles: ['清醒'],
       ),
     ];
   }
@@ -107,28 +107,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return [
       SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: dayStart,
-        endTime: dayStart.add(const Duration(minutes: 45)),
-        info: ['冥想'],
+        type: SleepStageEnum.core,
+        start: dayStart,
+        end: dayStart.add(const Duration(minutes: 45)),
+        titles: ['冥想'],
       ),
       SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: dayStart.add(const Duration(hours: 2)),
-        endTime: dayStart.add(const Duration(hours: 3, minutes: 15)),
-        info: ['冥想'],
+        type: SleepStageEnum.core,
+        start: dayStart.add(const Duration(hours: 2)),
+        end: dayStart.add(const Duration(hours: 3, minutes: 15)),
+        titles: ['冥想'],
       ),
       SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: dayStart.add(const Duration(hours: 5)),
-        endTime: dayStart.add(const Duration(hours: 5, minutes: 45)),
-        info: ['冥想'],
+        type: SleepStageEnum.core,
+        start: dayStart.add(const Duration(hours: 5)),
+        end: dayStart.add(const Duration(hours: 5, minutes: 45)),
+        titles: ['冥想'],
       ),
       SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: dayStart.add(const Duration(hours: 10, minutes: 45)),
-        endTime: dayStart.add(const Duration(hours: 12, minutes: 50)),
-        info: ['冥想'],
+        type: SleepStageEnum.core,
+        start: dayStart.add(const Duration(hours: 10, minutes: 45)),
+        end: dayStart.add(const Duration(hours: 12, minutes: 50)),
+        titles: ['冥想'],
       ),
     ];
   }
@@ -147,9 +147,9 @@ class _MyHomePageState extends State<MyHomePage> {
     // 睡眠数据
     final sleepSample = _generateSleepSampleData();
     // 睡眠开始时间
-    final sleepStartTime = sleepSample.first.startTime;
+    final sleepStartTime = sleepSample.first.start;
     // 睡眠结束时间
-    final sleepEndTime = sleepSample.last.endTime;
+    final sleepEndTime = sleepSample.last.end;
     // 冥想数据
     final meditationSample = _generateMeditationSampleData();
     // 冥想开始时间
@@ -191,9 +191,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   height: 300,
                   child: SleepStageChart(
                     // 开始时间
-                    startTime: sleepStartTime,
+                    dateFrom: sleepStartTime,
                     // 结束时间
-                    endTime: sleepEndTime,
+                    dateTo: sleepEndTime,
                     // 详情数据
                     details: sleepSample,
                     // Y轴上每个单位的高度比例，这里设置为总高度的 1/8
@@ -215,11 +215,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       strokeCap: StrokeCap.round,
                     ),
                     // 不绘制垂直线
-                    showVerticalLine: false,
+                    verticalLineVisible: false,
                     // 回调事件
-                    onIndicatorMoved: (stage) {
+                    onChange: (stage) {
                       // 可以在这里处理指示器移动事件
-                      print('当前阶段: ${stage.model}');
+                      print('当前阶段: ${stage.type}');
                     },
                     xAxisBottomHeight: 32,
                     bottomChild: [
@@ -242,19 +242,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     _buildLegendItem(
                       '浅睡',
-                      stageColors[SleepStageEnum.light]!,
+                      sleepStageColorsMap[SleepStageEnum.core]!,
                     ),
                     _buildLegendItem(
                       '深睡',
-                      stageColors[SleepStageEnum.deep]!,
+                      sleepStageColorsMap[SleepStageEnum.deep]!,
                     ),
                     _buildLegendItem(
                       '快速眼动',
-                      stageColors[SleepStageEnum.rem]!,
+                      sleepStageColorsMap[SleepStageEnum.rem]!,
                     ),
                     _buildLegendItem(
                       '清醒',
-                      stageColors[SleepStageEnum.awake]!,
+                      sleepStageColorsMap[SleepStageEnum.awake]!,
                     ),
                   ],
                 ),
@@ -284,9 +284,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     // 几个间隔
                     horizontalLineCount: 4,
                     // 是否显示垂直线
-                    showVerticalLine: true,
+                    verticalLineVisible: true,
                     // 是否显示水平线
-                    showHorizontalLine: false,
+                    horizontalLineVisible: false,
                     // 网格线样式
                     dividerPaintStyle: const SleepStageChartPaintStyle(
                       color: Color(0xFFB6BAD9),
@@ -297,21 +297,21 @@ class _MyHomePageState extends State<MyHomePage> {
                     // 列表，包含了每一段具体的睡眠数据
                     details: meditationSample,
                     // 整个图表的开始时间，用于计算X轴
-                    startTime: meditationStartTime,
+                    dateFrom: meditationStartTime,
                     // 整个图表的结束时间
-                    endTime: meditationEndTime,
+                    dateTo: meditationEndTime,
                     // 全部使用一个颜色
                     stageColors: const {
-                      SleepStageEnum.light: Color(0xFF43CAC4),
+                      SleepStageEnum.core: Color(0xFF43CAC4),
                       SleepStageEnum.deep: Color(0xFF43CAC4),
                       SleepStageEnum.rem: Color(0xFF43CAC4),
                       SleepStageEnum.awake: Color(0xFF43CAC4),
                     },
                     // 是否显示指示器
-                    hasIndicator: true,
+                    hasTooltipIndicator: true,
                     // 回调函数
-                    onIndicatorMoved: (item) {
-                      print('移动到：${item.model}');
+                    onChange: (item) {
+                      print('移动到：${item.type}');
                     },
                     allDayModel: true,
                     minuteInterval: 360,
