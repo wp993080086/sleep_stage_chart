@@ -61,26 +61,10 @@ class SleepStageChartPainter extends CustomPainter {
   final Map<SleepStageTypeEnum, Color> stageColors;
 
   /// 睡眠阶段顺序（从上到下），默认 [awake, core, rem, deep]
-  final List<SleepStageTypeEnum> stageOrder;
+  final List<SleepStageTypeEnum>? stageOrder;
 
   /// 日期格式化函数
-  final String Function(DateTime) dateFormatter;
-
-  /// 默认睡眠阶段颜色映射
-  static final Map<SleepStageTypeEnum, Color> _defaultStageColors =
-      defaultSleepStageColorsMap;
-
-  /// 默认睡眠阶段顺序（从上到下）
-  static const List<SleepStageTypeEnum> _defaultStageOrder = [
-    SleepStageTypeEnum.awake,
-    SleepStageTypeEnum.core,
-    SleepStageTypeEnum.rem,
-    SleepStageTypeEnum.deep,
-  ];
-
-  /// 默认日期格式化函数
-  static const String Function(DateTime date) _defaultDateFormatter =
-      formatTimeToHHMM;
+  final String Function(DateTime)? dateFormatter;
 
   /// 图表高度
   double chartHeight = 0;
@@ -112,10 +96,17 @@ class SleepStageChartPainter extends CustomPainter {
     this.indicatorVisible = false,
     this.allDayMode = false,
     Map<SleepStageTypeEnum, Color>? stageColors,
-    this.stageOrder = _defaultStageOrder,
+    this.stageOrder = defaultStageOrder,
     String Function(DateTime)? dateFormatter,
-  })  : stageColors = stageColors ?? _defaultStageColors,
-        dateFormatter = dateFormatter ?? _defaultDateFormatter;
+  })  : stageColors = stageColors ?? defaultSleepStageColorsMap,
+        dateFormatter = dateFormatter ?? formatTimeToHHMM,
+        assert(stageHeightRatio > 0 && stageHeightRatio <= 0.25,
+            'stageHeightRatio 必须在 (0, 0.25] 范围内，因为 4 × stageHeightRatio ≤ 1.0'),
+        assert(stageVerticalGapRatio >= 0, 'stageVerticalGapRatio 必须 ≥ 0'),
+        assert(
+          (stageHeightRatio * 4) + (stageVerticalGapRatio * 3) <= 1.0,
+          'stageHeightRatio × 4 + stageVerticalGapRatio × 3 不能超过 1.0',
+        );
 
   /// 绘制图表
   @override
@@ -207,7 +198,7 @@ class SleepStageChartPainter extends CustomPainter {
   /// stageOrder 定义了从上到下的顺序，index 0 在最上方
   double _calculateBarY(SleepStageTypeEnum type, double gapHeight) {
     // 在 stageOrder 中查找索引（从上到下）
-    final int index = stageOrder.indexOf(type);
+    final int index = stageOrder?.indexOf(type) ?? 0;
     if (index < 0) {
       // 如果类型不在 stageOrder 中，默认放在最下面
       return chartHeight - bottomPadding - barHeight;

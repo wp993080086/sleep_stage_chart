@@ -173,6 +173,14 @@ const defaultLineStyle = SleepStageChartLineStyle(
   color: Color(0xffe6e6e6),
 );
 
+/// 默认睡眠阶段顺序（从上到下）
+const List<SleepStageTypeEnum> defaultStageOrder = [
+  SleepStageTypeEnum.awake,
+  SleepStageTypeEnum.core,
+  SleepStageTypeEnum.rem,
+  SleepStageTypeEnum.deep,
+];
+
 /// 格式化日期（将 DateTime 对象格式化成 yyyy-MM-dd HH:mm 格式）
 String formatTimeToYYYYMMDDHHMM(DateTime date) {
   return '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';

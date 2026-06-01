@@ -14,7 +14,7 @@ class SleepStageChart extends StatefulWidget {
   /// 截至日期
   final DateTime dateTo;
 
-  /// 每个阶段高度比例 0.0 ~ 1.0 （图表的总高度为 容器总高度-水平轴底部高度 = 1.0）
+  /// 每个阶段高度比例 0.0 ~ 0.25 （图表的总高度为 容器总高度-水平轴底部高度 = 1.0）
   final double stageHeightRatio;
 
   /// 每个阶段色块垂直间隔比例 0.0 ~ 1.0 （图表的总高度为 容器总高度-水平轴底部高度 = 1.0）
@@ -66,7 +66,7 @@ class SleepStageChart extends StatefulWidget {
   final Map<SleepStageTypeEnum, Color>? stageColors;
 
   /// 睡眠阶段顺序（从上到下），默认 [awake, core, rem, deep]
-  final List<SleepStageTypeEnum> stageOrder;
+  final List<SleepStageTypeEnum>? stageOrder;
 
   /// 日期格式化函数
   final String Function(DateTime)? dateFormatter;
@@ -105,18 +105,20 @@ class SleepStageChart extends StatefulWidget {
     this.footerHeight = 40.0,
     this.footerChild = const [],
     this.stageColors,
-    this.stageOrder = const [
-      SleepStageTypeEnum.awake,
-      SleepStageTypeEnum.core,
-      SleepStageTypeEnum.rem,
-      SleepStageTypeEnum.deep,
-    ],
+    this.stageOrder,
     this.dateFormatter,
     this.onChange,
     this.onMove,
     this.onLongPress,
     this.onClickStage,
-  });
+  })  : assert(stageHeightRatio > 0 && stageHeightRatio <= 0.25,
+            'stageHeightRatio 必须在 (0, 0.25] 范围内，因为 4 × stageHeightRatio ≤ 1.0'),
+        assert(stageVerticalGapRatio >= 0, 'stageVerticalGapRatio 必须 ≥ 0'),
+        assert(
+          (stageHeightRatio * 4) + (stageVerticalGapRatio * 3) <= 1.0,
+          'stageHeightRatio × 4 + stageVerticalGapRatio × 3 不能超过 1.0，'
+          '当前值为 ${(stageHeightRatio * 4) + (stageVerticalGapRatio * 3)}',
+        );
 
   @override
   State<SleepStageChart> createState() => _SleepStageChartState();
