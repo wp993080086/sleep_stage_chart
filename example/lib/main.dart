@@ -259,8 +259,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   alignment: Alignment.center,
                   height: 300,
                   child: SleepStageChart(
-                    stageHeightRatio: 0.135,
-                    stageVerticalGapRatio: 0.1,
+                    stageHeightRatio: 0.25,
+                    stageVerticalGapRatio: 0.0,
                     // 图表的背景颜色，带透明度
                     backgroundColor: Colors.transparent,
                     // 色块的圆角
@@ -275,13 +275,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     dateFrom: meditationStartTime,
                     // 整个图表的结束时间
                     dateTo: meditationEndTime,
-                    // 全部使用一个颜色
-                    stageColors: const {
-                      SleepStageTypeEnum.core: Color(0xFF43CAC4),
-                      SleepStageTypeEnum.deep: Color(0xFF43CAC4),
-                      SleepStageTypeEnum.rem: Color(0xFF43CAC4),
-                      SleepStageTypeEnum.awake: Color(0xFF43CAC4),
-                    },
                     // 是否显示指示器
                     hasTooltipIndicator: true,
                     // 回调函数
@@ -289,6 +282,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       print('移动到：${item.type}');
                     },
                     allDayMode: true,
+                    allDayColor: Colors.blue,
                     horizontalNodes: const [0.00, 0.25, 0.50, 0.75, 1.00],
                     // X轴底部标题高度
                     footerHeight: 32,

@@ -56,6 +56,9 @@ class SleepStageChart extends StatefulWidget {
   /// 一整天模式 默认false
   final bool allDayMode;
 
+  /// 整天模式下的色块颜色
+  final Color? allDayColor;
+
   /// 水平轴底部高度
   final double footerHeight;
 
@@ -102,6 +105,7 @@ class SleepStageChart extends StatefulWidget {
     this.hasTooltip = true,
     this.hasTooltipIndicator = true,
     this.allDayMode = false,
+    this.allDayColor,
     this.footerHeight = 40.0,
     this.footerChild = const [],
     this.stageColors,
@@ -236,6 +240,7 @@ class _SleepStageChartState extends State<SleepStageChart> {
                     hasIndicator: widget.hasTooltipIndicator,
                     indicatorVisible: _isIndicatorVisible,
                     allDayMode: widget.allDayMode,
+                    allDayColor: widget.allDayColor,
                   ),
                   size: Size(constraints.maxWidth, maxH),
                 ),

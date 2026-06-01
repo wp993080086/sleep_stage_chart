@@ -57,6 +57,9 @@ class SleepStageChartPainter extends CustomPainter {
   /// 一整天模式 默认false
   final bool allDayMode;
 
+  /// 整天模式下的色块颜色
+  final Color? allDayColor;
+
   /// 睡眠阶段颜色映射
   final Map<SleepStageTypeEnum, Color> stageColors;
 
@@ -95,6 +98,7 @@ class SleepStageChartPainter extends CustomPainter {
     this.hasIndicator = true,
     this.indicatorVisible = false,
     this.allDayMode = false,
+    this.allDayColor,
     Map<SleepStageTypeEnum, Color>? stageColors,
     this.stageOrder = defaultStageOrder,
     String Function(DateTime)? dateFormatter,
@@ -111,29 +115,37 @@ class SleepStageChartPainter extends CustomPainter {
   /// 绘制图表
   @override
   void paint(Canvas canvas, Size size) {
-    /// 上下边距（均分剩余空间）
-    final double totalContentRatio =
-        (stageHeightRatio * 4) + (stageVerticalGapRatio * 3);
-    final double verticalPadding = (1.0 - totalContentRatio) / 2;
-
     /// 图表高度
     chartHeight = size.height;
 
-    /// 色块高度
-    barHeight = chartHeight * stageHeightRatio;
-
-    /// 色块间距
-    final double gapHeight = chartHeight * stageVerticalGapRatio;
-
-    /// 底部边距
-    bottomPadding = chartHeight * verticalPadding;
-
     _drawBackground(canvas, size);
     _drawLines(canvas, size);
-    _drawBarArea(canvas, size, gapHeight);
+
+    if (allDayMode) {
+      _drawAllDayBar(canvas, size);
+    } else {
+      /// 上下边距（均分剩余空间）
+      final double totalContentRatio =
+          (stageHeightRatio * 4) + (stageVerticalGapRatio * 3);
+      final double verticalPadding = (1.0 - totalContentRatio) / 2;
+
+      /// 色块高度
+      barHeight = chartHeight * stageHeightRatio;
+
+      /// 色块间距
+      final double gapHeight = chartHeight * stageVerticalGapRatio;
+
+      /// 底部边距
+      bottomPadding = chartHeight * verticalPadding;
+
+      _drawBarArea(canvas, size, gapHeight);
+    }
+
     if (hasIndicator && indicatorVisible) {
       _drawIndicator(canvas, size);
-      _drawTitle(canvas, size);
+      if (!allDayMode && data.isNotEmpty) {
+        _drawTitle(canvas, size);
+      }
     }
   }
 
@@ -144,6 +156,44 @@ class SleepStageChartPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawRect(
         Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
+  }
+
+  /// 绘制整天模式的色块（居中显示）
+  void _drawAllDayBar(Canvas canvas, Size size) {
+    final totalDurationInSeconds = endTime.difference(startTime).inSeconds;
+    if (totalDurationInSeconds <= 0) return;
+
+    // 整天模式只有一个色块，使用 unknown 类型
+    const type = SleepStageTypeEnum.unknown;
+
+    // 计算色块位置（全宽度）
+    const barLeft = 0.0;
+    final barWidth = size.width;
+
+    // 计算色块高度（使用 stageHeightRatio）
+    final barH = chartHeight * stageHeightRatio;
+
+    // 计算Y坐标（垂直居中）
+    final barY = (chartHeight - barH) / 2;
+
+    // 获取颜色（优先使用 allDayColor，否则使用 stageColors 中的 unknown 颜色）
+    final color = allDayColor ?? stageColors[type] ?? Colors.grey;
+
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        barLeft,
+        barY,
+        barWidth,
+        barH,
+      ),
+      Radius.circular(borderRadius),
+    );
+
+    canvas.drawRRect(rect, paint);
   }
 
   /// 绘制线
@@ -198,7 +248,8 @@ class SleepStageChartPainter extends CustomPainter {
   /// stageOrder 定义了从上到下的顺序，index 0 在最上方
   double _calculateBarY(SleepStageTypeEnum type, double gapHeight) {
     // 在 stageOrder 中查找索引（从上到下）
-    final int index = stageOrder?.indexOf(type) ?? 0;
+    final order = stageOrder ?? defaultStageOrder;
+    final int index = order.indexOf(type);
     if (index < 0) {
       // 如果类型不在 stageOrder 中，默认放在最下面
       return chartHeight - bottomPadding - barHeight;
