@@ -166,22 +166,6 @@ class SleepStageChartPaintStyle {
   });
 }
 
-/// 获取睡眠阶段在图表中的层级值，用于确定不同睡眠阶段在图表中的显示层级;
-int getHierarchyByStageType(SleepStageTypeEnum stage) {
-  switch (stage) {
-    case SleepStageTypeEnum.deep:
-      return 6;
-    case SleepStageTypeEnum.core:
-      return 4;
-    case SleepStageTypeEnum.rem:
-      return 2;
-    case SleepStageTypeEnum.awake:
-      return 1;
-    default:
-      return 7;
-  }
-}
-
 /// 默认线条样式
 const defaultLineStyle = SleepStageChartLineStyle(
   width: 5.0,

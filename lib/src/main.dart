@@ -65,6 +65,9 @@ class SleepStageChart extends StatefulWidget {
   /// 阶段颜色映射
   final Map<SleepStageTypeEnum, Color>? stageColors;
 
+  /// 睡眠阶段顺序（从上到下），默认 [awake, core, rem, deep]
+  final List<SleepStageTypeEnum> stageOrder;
+
   /// 日期格式化函数
   final String Function(DateTime)? dateFormatter;
 
@@ -102,6 +105,12 @@ class SleepStageChart extends StatefulWidget {
     this.footerHeight = 40.0,
     this.footerChild = const [],
     this.stageColors,
+    this.stageOrder = const [
+      SleepStageTypeEnum.awake,
+      SleepStageTypeEnum.core,
+      SleepStageTypeEnum.rem,
+      SleepStageTypeEnum.deep,
+    ],
     this.dateFormatter,
     this.onChange,
     this.onMove,
@@ -217,6 +226,7 @@ class _SleepStageChartState extends State<SleepStageChart> {
                     horizontalLineStyle: widget.horizontalLineStyle,
                     verticalLineStyle: widget.verticalLineStyle,
                     stageColors: widget.stageColors,
+                    stageOrder: widget.stageOrder,
                     dateFormatter: widget.dateFormatter,
                     indicatorPosition: _indicatorPosition,
                     horizontalLineVisible: widget.horizontalLineVisible,
