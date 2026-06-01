@@ -196,8 +196,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     dateFrom: sleepStartTime,
                     // 结束时间
                     dateTo: sleepEndTime,
-                    stageHeightRatio: 0.135,
-                    stageVerticalGapRatio: 0.1,
+                    stageHeightRatio: 0.2,
+                    stageVerticalGapRatio: 0.05,
                     // 图表的背景颜色
                     backgroundColor: Colors.transparent,
                     // 不绘制垂直线

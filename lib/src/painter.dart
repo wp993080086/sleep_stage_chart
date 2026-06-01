@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'model.dart';
-import 'dart:math' as my_math;
 
 /// 睡眠阶段图表绘制器
 class SleepStageChartPainter extends CustomPainter {
@@ -61,12 +60,23 @@ class SleepStageChartPainter extends CustomPainter {
   /// 睡眠阶段颜色映射
   final Map<SleepStageTypeEnum, Color> stageColors;
 
+  /// 睡眠阶段顺序（从上到下），默认 [awake, core, rem, deep]
+  final List<SleepStageTypeEnum> stageOrder;
+
   /// 日期格式化函数
   final String Function(DateTime) dateFormatter;
 
   /// 默认睡眠阶段颜色映射
   static final Map<SleepStageTypeEnum, Color> _defaultStageColors =
       defaultSleepStageColorsMap;
+
+  /// 默认睡眠阶段顺序（从上到下）
+  static const List<SleepStageTypeEnum> _defaultStageOrder = [
+    SleepStageTypeEnum.awake,
+    SleepStageTypeEnum.core,
+    SleepStageTypeEnum.rem,
+    SleepStageTypeEnum.deep,
+  ];
 
   /// 默认日期格式化函数
   static const String Function(DateTime date) _defaultDateFormatter =
@@ -78,8 +88,8 @@ class SleepStageChartPainter extends CustomPainter {
   /// 图表条高度
   double barHeight = 0;
 
-  /// 图表开始高度
-  double startHeight = 0;
+  /// 底部边距
+  double bottomPadding = 0;
 
   /// 构造函数
   SleepStageChartPainter({
@@ -102,6 +112,7 @@ class SleepStageChartPainter extends CustomPainter {
     this.indicatorVisible = false,
     this.allDayMode = false,
     Map<SleepStageTypeEnum, Color>? stageColors,
+    this.stageOrder = _defaultStageOrder,
     String Function(DateTime)? dateFormatter,
   })  : stageColors = stageColors ?? _defaultStageColors,
         dateFormatter = dateFormatter ?? _defaultDateFormatter;
@@ -109,21 +120,26 @@ class SleepStageChartPainter extends CustomPainter {
   /// 绘制图表
   @override
   void paint(Canvas canvas, Size size) {
+    /// 上下边距（均分剩余空间）
+    final double totalContentRatio =
+        (stageHeightRatio * 4) + (stageVerticalGapRatio * 3);
+    final double verticalPadding = (1.0 - totalContentRatio) / 2;
+
+    /// 图表高度
     chartHeight = size.height;
+
+    /// 色块高度
     barHeight = chartHeight * stageHeightRatio;
-    startHeight = chartHeight * stageHeightRatio;
 
-    const double bottomPadding = 0.0;
+    /// 色块间距
+    final double gapHeight = chartHeight * stageVerticalGapRatio;
 
-    final double effectiveChartHeight =
-        (chartHeight - bottomPadding) > 0 ? (chartHeight - bottomPadding) : 0;
-
-    barHeight = effectiveChartHeight * stageHeightRatio;
-    startHeight = effectiveChartHeight * stageHeightRatio;
+    /// 底部边距
+    bottomPadding = chartHeight * verticalPadding;
 
     _drawBackground(canvas, size);
     _drawLines(canvas, size);
-    _drawBarArea(canvas, size);
+    _drawBarArea(canvas, size, gapHeight);
     if (hasIndicator && indicatorVisible) {
       _drawIndicator(canvas, size);
       _drawTitle(canvas, size);
@@ -136,16 +152,16 @@ class SleepStageChartPainter extends CustomPainter {
       ..color = backgroundColor
       ..style = PaintingStyle.fill;
     canvas.drawRect(
-        Rect.fromLTWH(0, 0, size.width, chartHeight), backgroundPaint);
+        Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
   }
 
   /// 绘制线
   void _drawLines(Canvas canvas, Size size) {
     final dividerPaint = Paint()
-      ..color = dividerPaintStyle.color
-      ..strokeWidth = dividerPaintStyle.strokeWidth
-      ..style = dividerPaintStyle.style
-      ..strokeCap = dividerPaintStyle.strokeCap;
+      ..color = horizontalLineStyle.color
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.butt;
 
     if (horizontalLineVisible) {
       _drawHorizontalLines(canvas, size, dividerPaint);
@@ -157,74 +173,54 @@ class SleepStageChartPainter extends CustomPainter {
 
   /// 绘制水平线
   void _drawHorizontalLines(Canvas canvas, Size size, Paint paint) {
-    if (horizontalLineStyle.width + horizontalLineStyle.space <= 0) {
+    if (horizontalNodes.isEmpty) {
       return;
     }
 
-    final lineSpacing = chartHeight / horizontalLineCount;
-
-    for (int i = 0; i <= horizontalLineCount; i++) {
-      final y = (i * lineSpacing);
-      double startX = 0;
-      while (startX < size.width) {
-        final double endX =
-            my_math.min(startX + horizontalLineStyle.width, size.width);
-        canvas.drawLine(
-          Offset(startX, y),
-          Offset(endX, y),
-          paint,
-        );
-        startX += horizontalLineStyle.width + horizontalLineStyle.space;
-      }
+    for (final node in horizontalNodes) {
+      final y = node * size.height;
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y),
+        paint,
+      );
     }
   }
 
   /// 绘制垂直线
   void _drawVerticalLines(Canvas canvas, Size size, Paint paint) {
-    if (verticalLineStyle.width + verticalLineStyle.space <= 0) {
+    if (verticalNodes.isEmpty) {
       return;
     }
-    if (allDayMode) {
-      final double verticalLineCount = 1440 / minuteInterval;
-      final double lineSpacing = size.width / verticalLineCount;
-      for (int i = 0; i <= verticalLineCount; i++) {
-        final x = (i * lineSpacing);
-        double startY = 0;
-        while (startY < chartHeight) {
-          final double endY =
-              my_math.min(startY + verticalLineStyle.width, chartHeight);
-          canvas.drawLine(
-            Offset(x, startY),
-            Offset(x, endY),
-            paint,
-          );
-          startY += verticalLineStyle.width + verticalLineStyle.space;
-        }
-      }
-      return;
-    }
-    double startY = 0.0;
-    final endY = chartHeight;
 
-    while (startY < endY) {
-      final double safeEndY =
-          my_math.min(startY + verticalLineStyle.width, endY);
+    for (final node in verticalNodes) {
+      final x = node * size.width;
       canvas.drawLine(
-        Offset(0, startY),
-        Offset(0, safeEndY),
+        Offset(x, 0),
+        Offset(x, size.height),
         paint,
       );
-      canvas.drawLine(
-        Offset(size.width, startY),
-        Offset(size.width, safeEndY),
-        paint,
-      );
-      startY += verticalLineStyle.width + verticalLineStyle.space;
     }
   }
 
+  /// 计算色块的Y坐标
+  /// stageOrder 定义了从上到下的顺序，index 0 在最上方
+  double _calculateBarY(SleepStageTypeEnum type, double gapHeight) {
+    // 在 stageOrder 中查找索引（从上到下）
+    final int index = stageOrder.indexOf(type);
+    if (index < 0) {
+      // 如果类型不在 stageOrder 中，默认放在最下面
+      return chartHeight - bottomPadding - barHeight;
+    }
+    // 从上到下计算Y坐标（Flutter坐标系Y向下增长）
+    // 最上方的Y = topPadding
+    final double topPadding = bottomPadding;
+    final double y = topPadding + index * (barHeight + gapHeight);
+    return y;
+  }
+
   /// 绘制睡眠阶段区域
-  void _drawBarArea(Canvas canvas, Size size) {
+  void _drawBarArea(Canvas canvas, Size size, double gapHeight) {
     final totalDurationInSeconds = endTime.difference(startTime).inSeconds;
     if (totalDurationInSeconds <= 0) return;
 
@@ -241,6 +237,7 @@ class SleepStageChartPainter extends CustomPainter {
           canvas: canvas,
           currentIndex: i,
           left: connectorLeft,
+          gapHeight: gapHeight,
         );
       }
     }
@@ -254,17 +251,19 @@ class SleepStageChartPainter extends CustomPainter {
 
       if (barWidth <= 0) continue;
 
-      final double endY = startHeight * getHierarchyByStageType(detail.type);
-      final double startY = endY;
+      final double stageY = _calculateBarY(detail.type, gapHeight);
+
+      final color = stageColors[detail.type];
+      if (color == null) continue;
 
       final paint = Paint()
-        ..color = stageColors[detail.type]!
+        ..color = color
         ..style = PaintingStyle.fill;
 
       final rect = RRect.fromRectAndRadius(
         Rect.fromLTWH(
           barLeft,
-          startY,
+          stageY,
           barWidth + connectorLineWidth,
           barHeight,
         ),
@@ -280,11 +279,10 @@ class SleepStageChartPainter extends CustomPainter {
     required Canvas canvas,
     required int currentIndex,
     required double left,
+    required double gapHeight,
   }) {
-    final prevBarTopY =
-        (startHeight * getHierarchyByStageType(data[currentIndex - 1].type));
-    final currentBarTopY =
-        (startHeight * getHierarchyByStageType(data[currentIndex].type));
+    final prevBarTopY = _calculateBarY(data[currentIndex - 1].type, gapHeight);
+    final currentBarTopY = _calculateBarY(data[currentIndex].type, gapHeight);
 
     final cornerOffset = borderRadius * 0.7;
 
@@ -300,12 +298,15 @@ class SleepStageChartPainter extends CustomPainter {
       return;
     }
 
-    final prevColor =
-        (stageColors[data[currentIndex - 1].type] ?? Colors.transparent)
-            .withAlpha(123);
-    final currentColor =
-        (stageColors[data[currentIndex].type] ?? Colors.transparent)
-            .withAlpha(123);
+    final prevStageColor = stageColors[data[currentIndex - 1].type];
+    final currentStageColor = stageColors[data[currentIndex].type];
+
+    if (prevStageColor == null || currentStageColor == null) {
+      return;
+    }
+
+    final prevColor = prevStageColor.withAlpha(123);
+    final currentColor = currentStageColor.withAlpha(123);
 
     final orderedColors = prevBarTopY < currentBarTopY
         ? [prevColor, currentColor]
@@ -428,8 +429,11 @@ class SleepStageChartPainter extends CustomPainter {
 
     const bgY = 0.0;
 
+    final stageColor = stageColors[currentStage.type];
+    if (stageColor == null) return;
+
     final bgPaint = Paint()
-      ..color = stageColors[currentStage.type]!
+      ..color = stageColor
       ..style = PaintingStyle.fill;
 
     final bgRect = RRect.fromRectAndRadius(
@@ -449,19 +453,17 @@ class SleepStageChartPainter extends CustomPainter {
 
   /// 绘制指示器
   void _drawIndicator(Canvas canvas, Size size) {
-    final chartRealHeight = size.height - dividerPaintStyle.strokeWidth;
-
     final indicatorPaint = Paint()
       ..color = const Color(0xFF8186B3).withAlpha(123)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
 
     final centerX = indicatorPosition;
-    const startY = 0;
-    final endY = startY + chartRealHeight;
+    const startY = 0.0;
+    final endY = size.height;
 
     canvas.drawLine(
-      Offset(centerX, startY - 1),
+      Offset(centerX, startY),
       Offset(centerX, endY),
       indicatorPaint,
     );
