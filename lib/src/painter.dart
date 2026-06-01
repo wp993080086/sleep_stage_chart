@@ -1,98 +1,136 @@
 import 'package:flutter/material.dart';
 import 'model.dart';
-import 'dart:math' as math;
+import 'dart:math' as my_math;
 
+/// 睡眠阶段图表绘制器
 class SleepStageChartPainter extends CustomPainter {
-  final double heightUnitRatio;
+  /// 睡眠阶段图表数据
+  final List<SleepStageChartSegment> data;
+
+  /// 背景颜色
   final Color backgroundColor;
-  final List<SleepStageDetails> details;
-  final DateTime startTime;
-  final DateTime endTime;
+
+  /// 圆角半径
   final double borderRadius;
+
+  /// 开始时间
+  final DateTime startTime;
+
+  /// 结束时间
+  final DateTime endTime;
+
+  /// 每个阶段高度比例 0.0 ~ 1.0 （图表的总高度为 容器总高度-水平轴底部高度 = 1.0）
+  final double stageHeightRatio;
+
+  /// 每个阶段色块垂直间隔比例 0.0 ~ 1.0 （图表的总高度为 容器总高度-水平轴底部高度 = 1.0）
+  final double stageVerticalGapRatio;
+
+  /// 连接线宽度
   final double connectorLineWidth;
-  double indicatorPosition;
+
+  /// 水平线样式
   final SleepStageChartLineStyle horizontalLineStyle;
+
+  /// 垂直线样式
   final SleepStageChartLineStyle verticalLineStyle;
-  final int horizontalLineCount;
-  final SleepStageChartPaintStyle dividerPaintStyle;
-  final Map<SleepStageEnum, Color> stageColors;
-  final String Function(DateTime) dateFormatter;
-  final bool showVerticalLine;
-  final bool showHorizontalLine;
+
+  /// 水平轴节点 0.0 ~ 1.0
+  final List<double> horizontalNodes;
+
+  /// 垂轴节点 0.0 ~ 1.0
+  final List<double> verticalNodes;
+
+  /// 垂直线是否可见
+  final bool verticalLineVisible;
+
+  /// 水平线是否可见
+  final bool horizontalLineVisible;
+
+  /// 是否包含指示器
   final bool hasIndicator;
-  final bool isIndicatorVisible;
-  final bool allDayModel;
-  final int minuteInterval;
 
-  static final Map<SleepStageEnum, Color> _defaultStageColors = {
-    SleepStageEnum.core: const Color(0xFF54B0FF),
-    SleepStageEnum.deep: const Color(0xFF4D58E7),
-    SleepStageEnum.rem: const Color(0xFF82DDDD),
-    SleepStageEnum.awake: const Color(0xFFFFA877),
-  };
+  /// 是否显示指示器
+  final bool indicatorVisible;
 
-  static String _defaultDateFormatter(DateTime date) {
-    return '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
+  /// 指示器位置 0.0 ~ 1.0
+  double indicatorPosition;
 
+  /// 一整天模式 默认false
+  final bool allDayMode;
+
+  /// 睡眠阶段颜色映射
+  final Map<SleepStageTypeEnum, Color> stageColors;
+
+  /// 日期格式化函数
+  final String Function(DateTime) dateFormatter;
+
+  /// 默认睡眠阶段颜色映射
+  static final Map<SleepStageTypeEnum, Color> _defaultStageColors =
+      defaultSleepStageColorsMap;
+
+  /// 默认日期格式化函数
+  static const String Function(DateTime date) _defaultDateFormatter =
+      formatTimeToHHMM;
+
+  /// 图表高度
   double chartHeight = 0;
+
+  /// 图表条高度
   double barHeight = 0;
+
+  /// 图表开始高度
   double startHeight = 0;
 
+  /// 构造函数
   SleepStageChartPainter({
-    required this.heightUnitRatio,
+    required this.data,
+    required this.stageHeightRatio,
+    required this.stageVerticalGapRatio,
     required this.backgroundColor,
-    required this.details,
     required this.startTime,
     required this.endTime,
-    this.borderRadius = 8.0,
-    this.connectorLineWidth = 2.0,
-    this.horizontalLineStyle =
-        const SleepStageChartLineStyle(width: 5.0, space: 3.0),
-    this.verticalLineStyle =
-        const SleepStageChartLineStyle(width: 5.0, space: 3.0),
-    this.horizontalLineCount = 8,
-    this.dividerPaintStyle = const SleepStageChartPaintStyle(
-      color: Color(0xFFEEEEEE),
-      strokeWidth: 1.0,
-      style: PaintingStyle.stroke,
-      strokeCap: StrokeCap.round,
-    ),
-    Map<SleepStageEnum, Color>? stageColors,
-    String Function(DateTime)? dateFormatter,
+    this.borderRadius = 4.0,
+    this.connectorLineWidth = 1.0,
+    this.horizontalLineStyle = defaultLineStyle,
+    this.verticalLineStyle = defaultLineStyle,
+    this.verticalNodes = const [],
+    this.horizontalNodes = const [],
+    this.verticalLineVisible = true,
+    this.horizontalLineVisible = true,
     this.indicatorPosition = 0.0,
-    this.showVerticalLine = true,
-    this.showHorizontalLine = true,
     this.hasIndicator = true,
-    this.isIndicatorVisible = false,
-    this.allDayModel = false,
-    this.minuteInterval = 360,
+    this.indicatorVisible = false,
+    this.allDayMode = false,
+    Map<SleepStageTypeEnum, Color>? stageColors,
+    String Function(DateTime)? dateFormatter,
   })  : stageColors = stageColors ?? _defaultStageColors,
         dateFormatter = dateFormatter ?? _defaultDateFormatter;
 
+  /// 绘制图表
   @override
   void paint(Canvas canvas, Size size) {
     chartHeight = size.height;
-    barHeight = chartHeight * heightUnitRatio;
-    startHeight = chartHeight * heightUnitRatio;
+    barHeight = chartHeight * stageHeightRatio;
+    startHeight = chartHeight * stageHeightRatio;
 
     const double bottomPadding = 0.0;
 
     final double effectiveChartHeight =
         (chartHeight - bottomPadding) > 0 ? (chartHeight - bottomPadding) : 0;
 
-    barHeight = effectiveChartHeight * heightUnitRatio;
-    startHeight = effectiveChartHeight * heightUnitRatio;
+    barHeight = effectiveChartHeight * stageHeightRatio;
+    startHeight = effectiveChartHeight * stageHeightRatio;
 
     _drawBackground(canvas, size);
     _drawLines(canvas, size);
     _drawBarArea(canvas, size);
-    if (hasIndicator && isIndicatorVisible) {
+    if (hasIndicator && indicatorVisible) {
       _drawIndicator(canvas, size);
       _drawTitle(canvas, size);
     }
   }
 
+  /// 绘制背景
   void _drawBackground(Canvas canvas, Size size) {
     final backgroundPaint = Paint()
       ..color = backgroundColor
@@ -101,6 +139,7 @@ class SleepStageChartPainter extends CustomPainter {
         Rect.fromLTWH(0, 0, size.width, chartHeight), backgroundPaint);
   }
 
+  /// 绘制线
   void _drawLines(Canvas canvas, Size size) {
     final dividerPaint = Paint()
       ..color = dividerPaintStyle.color
@@ -108,14 +147,15 @@ class SleepStageChartPainter extends CustomPainter {
       ..style = dividerPaintStyle.style
       ..strokeCap = dividerPaintStyle.strokeCap;
 
-    if (showHorizontalLine) {
+    if (horizontalLineVisible) {
       _drawHorizontalLines(canvas, size, dividerPaint);
     }
-    if (showVerticalLine) {
+    if (verticalLineVisible) {
       _drawVerticalLines(canvas, size, dividerPaint);
     }
   }
 
+  /// 绘制水平线
   void _drawHorizontalLines(Canvas canvas, Size size, Paint paint) {
     if (horizontalLineStyle.width + horizontalLineStyle.space <= 0) {
       return;
@@ -128,7 +168,7 @@ class SleepStageChartPainter extends CustomPainter {
       double startX = 0;
       while (startX < size.width) {
         final double endX =
-            math.min(startX + horizontalLineStyle.width, size.width);
+            my_math.min(startX + horizontalLineStyle.width, size.width);
         canvas.drawLine(
           Offset(startX, y),
           Offset(endX, y),
@@ -139,11 +179,12 @@ class SleepStageChartPainter extends CustomPainter {
     }
   }
 
+  /// 绘制垂直线
   void _drawVerticalLines(Canvas canvas, Size size, Paint paint) {
     if (verticalLineStyle.width + verticalLineStyle.space <= 0) {
       return;
     }
-    if (allDayModel) {
+    if (allDayMode) {
       final double verticalLineCount = 1440 / minuteInterval;
       final double lineSpacing = size.width / verticalLineCount;
       for (int i = 0; i <= verticalLineCount; i++) {
@@ -151,7 +192,7 @@ class SleepStageChartPainter extends CustomPainter {
         double startY = 0;
         while (startY < chartHeight) {
           final double endY =
-              math.min(startY + verticalLineStyle.width, chartHeight);
+              my_math.min(startY + verticalLineStyle.width, chartHeight);
           canvas.drawLine(
             Offset(x, startY),
             Offset(x, endY),
@@ -166,7 +207,8 @@ class SleepStageChartPainter extends CustomPainter {
     final endY = chartHeight;
 
     while (startY < endY) {
-      final double safeEndY = math.min(startY + verticalLineStyle.width, endY);
+      final double safeEndY =
+          my_math.min(startY + verticalLineStyle.width, endY);
       canvas.drawLine(
         Offset(0, startY),
         Offset(0, safeEndY),
@@ -181,15 +223,16 @@ class SleepStageChartPainter extends CustomPainter {
     }
   }
 
+  /// 绘制睡眠阶段区域
   void _drawBarArea(Canvas canvas, Size size) {
     final totalDurationInSeconds = endTime.difference(startTime).inSeconds;
     if (totalDurationInSeconds <= 0) return;
 
     final pixelsPerSecond = size.width / totalDurationInSeconds;
 
-    for (int i = 1; i < details.length; i++) {
-      final prevDetail = details[i - 1];
-      final currentDetail = details[i];
+    for (int i = 1; i < data.length; i++) {
+      final prevDetail = data[i - 1];
+      final currentDetail = data[i];
 
       if (prevDetail.end == currentDetail.start) {
         final connectorLeft =
@@ -202,8 +245,8 @@ class SleepStageChartPainter extends CustomPainter {
       }
     }
 
-    for (int i = 0; i < details.length; i++) {
-      final detail = details[i];
+    for (int i = 0; i < data.length; i++) {
+      final detail = data[i];
       final barLeft =
           detail.start.difference(startTime).inSeconds * pixelsPerSecond;
       final barWidth =
@@ -232,15 +275,16 @@ class SleepStageChartPainter extends CustomPainter {
     }
   }
 
+  /// 绘制连接线
   void _drawConnectedLine({
     required Canvas canvas,
     required int currentIndex,
     required double left,
   }) {
     final prevBarTopY =
-        (startHeight * getHierarchyByStageType(details[currentIndex - 1].type));
+        (startHeight * getHierarchyByStageType(data[currentIndex - 1].type));
     final currentBarTopY =
-        (startHeight * getHierarchyByStageType(details[currentIndex].type));
+        (startHeight * getHierarchyByStageType(data[currentIndex].type));
 
     final cornerOffset = borderRadius * 0.7;
 
@@ -257,10 +301,10 @@ class SleepStageChartPainter extends CustomPainter {
     }
 
     final prevColor =
-        (stageColors[details[currentIndex - 1].type] ?? Colors.transparent)
+        (stageColors[data[currentIndex - 1].type] ?? Colors.transparent)
             .withAlpha(123);
     final currentColor =
-        (stageColors[details[currentIndex].type] ?? Colors.transparent)
+        (stageColors[data[currentIndex].type] ?? Colors.transparent)
             .withAlpha(123);
 
     final orderedColors = prevBarTopY < currentBarTopY
@@ -284,17 +328,18 @@ class SleepStageChartPainter extends CustomPainter {
     canvas.drawRect(lineRect, connectPaint);
   }
 
+  /// 绘制标题
   void _drawTitle(Canvas canvas, Size size) {
     final totalDurationInSeconds = endTime.difference(startTime).inSeconds;
     if (totalDurationInSeconds <= 0) return;
 
     final pixelsPerSecond = size.width / totalDurationInSeconds;
 
-    SleepStageDetails? currentStage;
+    SleepStageChartSegment? currentStage;
     double stageStartX = 0;
     double stageWidth = 0;
 
-    for (final detail in details) {
+    for (final detail in data) {
       final barLeft =
           detail.start.difference(startTime).inSeconds * pixelsPerSecond;
       final barWidth =
@@ -326,16 +371,16 @@ class SleepStageChartPainter extends CustomPainter {
 
     String stageName;
     switch (currentStage.type) {
-      case SleepStageEnum.core:
+      case SleepStageTypeEnum.core:
         stageName = 'Light';
         break;
-      case SleepStageEnum.deep:
+      case SleepStageTypeEnum.deep:
         stageName = 'Deep';
         break;
-      case SleepStageEnum.rem:
+      case SleepStageTypeEnum.rem:
         stageName = 'REM';
         break;
-      case SleepStageEnum.awake:
+      case SleepStageTypeEnum.awake:
         stageName = 'Awake';
         break;
       default:
@@ -402,6 +447,7 @@ class SleepStageChartPainter extends CustomPainter {
     timeRangePainter.paint(canvas, Offset(timeX, timeY));
   }
 
+  /// 绘制指示器
   void _drawIndicator(Canvas canvas, Size size) {
     final chartRealHeight = size.height - dividerPaintStyle.strokeWidth;
 
@@ -421,9 +467,10 @@ class SleepStageChartPainter extends CustomPainter {
     );
   }
 
+  /// 重新绘制
   @override
   bool shouldRepaint(SleepStageChartPainter oldDelegate) {
     return oldDelegate.indicatorPosition != indicatorPosition ||
-        oldDelegate.isIndicatorVisible != isIndicatorVisible;
+        oldDelegate.indicatorVisible != indicatorVisible;
   }
 }

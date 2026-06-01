@@ -5,38 +5,38 @@ import 'package:sleep_stage_chart/sleep_stage_chart.dart';
 void main() {
   testWidgets('SleepStageChart renders correctly', (WidgetTester tester) async {
     final details = [
-      SleepStageDetails(
-        type: SleepStageEnum.awake,
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.awake,
         start: DateTime(2023, 1, 1, 22, 0),
         end: DateTime(2023, 1, 1, 22, 30),
         titles: [],
       ),
-      SleepStageDetails(
-        type: SleepStageEnum.core,
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.core,
         start: DateTime(2023, 1, 1, 22, 30),
         end: DateTime(2023, 1, 2, 0, 0),
         titles: [],
       ),
-      SleepStageDetails(
-        type: SleepStageEnum.deep,
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.deep,
         start: DateTime(2023, 1, 2, 0, 0),
         end: DateTime(2023, 1, 2, 2, 0),
         titles: [],
       ),
-      SleepStageDetails(
-        type: SleepStageEnum.rem,
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.rem,
         start: DateTime(2023, 1, 2, 2, 0),
         end: DateTime(2023, 1, 2, 4, 0),
         titles: [],
       ),
-      SleepStageDetails(
-        type: SleepStageEnum.core,
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.core,
         start: DateTime(2023, 1, 2, 4, 0),
         end: DateTime(2023, 1, 2, 6, 0),
         titles: [],
       ),
-      SleepStageDetails(
-        type: SleepStageEnum.awake,
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.awake,
         start: DateTime(2023, 1, 2, 6, 0),
         end: DateTime(2023, 1, 2, 6, 30),
         titles: [],
@@ -47,7 +47,7 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: SleepStageChart(
-            details: details,
+            data: details,
             dateFrom: DateTime(2023, 1, 1, 22, 0),
             dateTo: DateTime(2023, 1, 2, 7, 0),
             heightUnitRatio: 0.1,
@@ -69,10 +69,10 @@ void main() {
   });
 
   test('getHeightByStage returns correct height', () {
-    expect(getHierarchyByStageType(SleepStageEnum.deep), 6);
-    expect(getHierarchyByStageType(SleepStageEnum.core), 4);
-    expect(getHierarchyByStageType(SleepStageEnum.rem), 2);
-    expect(getHierarchyByStageType(SleepStageEnum.awake), 1);
-    expect(getHierarchyByStageType(SleepStageEnum.unknown), 7);
+    expect(getHierarchyByStageType(SleepStageTypeEnum.deep), 6);
+    expect(getHierarchyByStageType(SleepStageTypeEnum.core), 4);
+    expect(getHierarchyByStageType(SleepStageTypeEnum.rem), 2);
+    expect(getHierarchyByStageType(SleepStageTypeEnum.awake), 1);
+    expect(getHierarchyByStageType(SleepStageTypeEnum.unknown), 7);
   });
 }

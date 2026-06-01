@@ -1,43 +1,43 @@
 import 'dart:ui';
 
 /// 睡眠阶段枚举，用于标识不同的睡眠状态
-enum SleepStageEnum {
+enum SleepStageTypeEnum {
   /// 在床上
   inBed,
-
-  /// 未知状态
-  unknown,
-
-  /// 浅睡
-  core,
 
   /// 清醒
   awake,
 
+  /// 快速眼动
+  rem,
+
+  /// 浅睡
+  core,
+
   /// 深睡
   deep,
 
-  /// 快速眼动
-  rem,
+  /// 未知状态
+  unknown,
 }
 
 /// 为睡眠阶段枚举添加扩展
-extension SleepStageEnumExtension on SleepStageEnum {
+extension SleepStageEnumExtension on SleepStageTypeEnum {
   /// 阶段枚举对应的标题描述
   String get title {
     switch (this) {
-      case SleepStageEnum.inBed:
+      case SleepStageTypeEnum.inBed:
         return '在床上';
-      case SleepStageEnum.unknown:
-        return '未知状态';
-      case SleepStageEnum.core:
-        return '浅睡';
-      case SleepStageEnum.awake:
+      case SleepStageTypeEnum.awake:
         return '清醒';
-      case SleepStageEnum.deep:
-        return '深睡';
-      case SleepStageEnum.rem:
+      case SleepStageTypeEnum.core:
+        return '浅睡';
+      case SleepStageTypeEnum.rem:
         return '快速眼动';
+      case SleepStageTypeEnum.deep:
+        return '深睡';
+      case SleepStageTypeEnum.unknown:
+        return '未知状态';
     }
   }
 
@@ -45,51 +45,54 @@ extension SleepStageEnumExtension on SleepStageEnum {
   int get healthKitValue {
     switch (this) {
       /// 在床上
-      case SleepStageEnum.inBed:
+      case SleepStageTypeEnum.inBed:
         return 0;
 
-      /// 未知状态
-      case SleepStageEnum.unknown:
-        return 1;
-
       /// 清醒
-      case SleepStageEnum.awake:
+      case SleepStageTypeEnum.awake:
         return 2;
 
+      /// 快速眼动
+      case SleepStageTypeEnum.rem:
+        return 5;
+
       /// 浅睡
-      case SleepStageEnum.core:
+      case SleepStageTypeEnum.core:
         return 3;
 
       /// 深睡
-      case SleepStageEnum.deep:
+      case SleepStageTypeEnum.deep:
         return 4;
 
-      /// 快速眼动
-      case SleepStageEnum.rem:
-        return 5;
+      /// 未知状态
+      case SleepStageTypeEnum.unknown:
+        return 1;
     }
   }
 }
 
 /// 不同睡眠阶段类型对应的颜色
-final Map<SleepStageEnum, Color> sleepStageColorsMap = {
+final Map<SleepStageTypeEnum, Color> defaultSleepStageColorsMap = {
   /// 清醒阶段
-  SleepStageEnum.awake: const Color(0xFFFFA877),
+  SleepStageTypeEnum.awake: const Color(0xFFFFA877),
 
   /// 浅睡阶段
-  SleepStageEnum.core: const Color(0xFF54B0FF),
+  SleepStageTypeEnum.core: const Color(0xFF54B0FF),
 
   /// 深睡阶段
-  SleepStageEnum.deep: const Color(0xFF4D58E7),
+  SleepStageTypeEnum.deep: const Color(0xFF4D58E7),
 
   /// 快速眼动阶段
-  SleepStageEnum.rem: const Color(0xFF82DDDD),
+  SleepStageTypeEnum.rem: const Color(0xFF82DDDD),
+
+  /// 未知状态
+  SleepStageTypeEnum.unknown: const Color(0xFFD9D9D9),
 };
 
-/// 睡眠阶段图表数据详情类 用于存储图表绘制所需的睡眠阶段详细信息
-class SleepStageDetails {
-  /// 睡眠阶段类型
-  final SleepStageEnum type;
+/// 睡眠阶段图表片段类 用于存储图表绘制所需的睡眠阶段详细信息
+class SleepStageChartSegment {
+  /// 阶段类型
+  final SleepStageTypeEnum type;
 
   /// 阶段开始时间
   final DateTime start;
@@ -103,7 +106,7 @@ class SleepStageDetails {
   /// 副标题
   final List<String> subtitles;
 
-  SleepStageDetails({
+  SleepStageChartSegment({
     required this.type,
     required this.start,
     required this.end,
@@ -112,17 +115,18 @@ class SleepStageDetails {
   });
 
   /// 创建测试用的睡眠详情图表数据;
-  factory SleepStageDetails.withTest() {
-    return SleepStageDetails(
-      type: SleepStageEnum.core,
+  factory SleepStageChartSegment.withTest() {
+    return SleepStageChartSegment(
+      type: SleepStageTypeEnum.core,
       start: DateTime.now(),
       end: DateTime.now().add(const Duration(minutes: 30)),
       titles: const [],
+      subtitles: const [],
     );
   }
 }
 
-/// 线条样式类，定义网格线的宽度和间距
+/// 睡眠阶段图表线条样式类，定义网格线的宽度和间距
 class SleepStageChartLineStyle {
   /// 线条宽度
   final double width;
@@ -130,13 +134,17 @@ class SleepStageChartLineStyle {
   /// 线条间距
   final double space;
 
+  /// 线条颜色
+  final Color color;
+
   const SleepStageChartLineStyle({
     required this.width,
     required this.space,
+    required this.color,
   });
 }
 
-/// 画笔样式类，定义画笔的颜色、宽度、样式和端点形状
+/// 睡眠阶段图表画笔样式类，定义画笔的颜色,宽度,样式,端点形状
 class SleepStageChartPaintStyle {
   /// 画笔颜色
   final Color color;
@@ -159,19 +167,31 @@ class SleepStageChartPaintStyle {
 }
 
 /// 获取睡眠阶段在图表中的层级值，用于确定不同睡眠阶段在图表中的显示层级;
-int getHierarchyByStageType(SleepStageEnum stage) {
+int getHierarchyByStageType(SleepStageTypeEnum stage) {
   switch (stage) {
-    case SleepStageEnum.deep:
+    case SleepStageTypeEnum.deep:
       return 6;
-    case SleepStageEnum.core:
+    case SleepStageTypeEnum.core:
       return 4;
-    case SleepStageEnum.rem:
+    case SleepStageTypeEnum.rem:
       return 2;
-    case SleepStageEnum.awake:
+    case SleepStageTypeEnum.awake:
       return 1;
     default:
       return 7;
   }
+}
+
+/// 默认线条样式
+const defaultLineStyle = SleepStageChartLineStyle(
+  width: 5.0,
+  space: 3.0,
+  color: Color(0xffe6e6e6),
+);
+
+/// 格式化日期（将 DateTime 对象格式化成 yyyy-MM-dd HH:mm 格式）
+String formatTimeToYYYYMMDDHHMM(DateTime date) {
+  return '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
 }
 
 /// 格式化时间（将 DateTime 对象格式化成 HH:mm（小时:分钟）格式）
@@ -187,8 +207,8 @@ String formatTimeMinute(int totalMinutes) {
   }
 
   // 计算小时和分钟
-  int hours = totalMinutes ~/ 60;
-  int minutes = totalMinutes % 60;
+  final int hours = totalMinutes ~/ 60;
+  final int minutes = totalMinutes % 60;
 
   // 当小时为0时（即不足1小时），这个判断会直接进入最后的 else 分支
   if (hours > 0 && minutes > 0) {
