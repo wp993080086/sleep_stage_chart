@@ -5,8 +5,8 @@ import 'painter.dart';
 /// 睡眠阶段图表
 /// 用于显示睡眠时长和各个阶段的详细信息
 class SleepStageChart extends StatefulWidget {
-  /// 睡眠详情数据
-  final List<SleepStageDetails> details;
+  /// 睡眠阶段数据
+  final List<SleepStageChartSegment> data;
 
   /// 起始日期
   final DateTime dateFrom;
@@ -14,11 +14,11 @@ class SleepStageChart extends StatefulWidget {
   /// 截至日期
   final DateTime dateTo;
 
-  /// 高度比例单位 0 ~ 1 图表的总高度为1
-  final double heightUnitRatio;
+  /// 每个阶段高度比例 0.0 ~ 1.0 （图表的总高度为 容器总高度-水平轴底部高度 = 1.0）
+  final double stageHeightRatio;
 
-  /// X轴底部标题高度
-  final double xAxisBottomHeight;
+  /// 每个阶段色块垂直间隔比例 0.0 ~ 1.0 （图表的总高度为 容器总高度-水平轴底部高度 = 1.0）
+  final double stageVerticalGapRatio;
 
   /// 背景颜色
   final Color backgroundColor;
@@ -26,7 +26,7 @@ class SleepStageChart extends StatefulWidget {
   /// 色块圆角
   final double borderRadius;
 
-  /// 连接线宽度
+  /// 色块连接线宽度
   final double connectorLineWidth;
 
   /// 水平线样式
@@ -35,17 +35,11 @@ class SleepStageChart extends StatefulWidget {
   /// 垂直线样式
   final SleepStageChartLineStyle verticalLineStyle;
 
-  /// 图表被水平线分为几块 默认分为8块，带上边框一共9条线
-  final int horizontalLineCount;
+  /// 水平轴节点 0.0 ~ 1.0
+  final List<double> horizontalNodes;
 
-  /// 网格线样式
-  final SleepStageChartPaintStyle dividerPaintStyle;
-
-  /// 阶段颜色映射
-  final Map<SleepStageEnum, Color>? stageColors;
-
-  /// 日期格式化函数
-  final String Function(DateTime)? dateFormatter;
+  /// 垂直轴节点 0.0 ~ 1.0
+  final List<double> verticalNodes;
 
   /// 是否显示垂直线
   final bool verticalLineVisible;
@@ -60,56 +54,55 @@ class SleepStageChart extends StatefulWidget {
   final bool hasTooltipIndicator;
 
   /// 一整天模式 默认false
-  final bool allDayModel;
+  final bool allDayMode;
 
-  /// 一整天的分钟间隙 默认360分钟
-  final int minuteInterval;
+  /// 水平轴底部高度
+  final double footerHeight;
 
-  /// 底部子组件集合
-  final List<Widget> bottomChild;
+  /// 水平轴子组件集合
+  final List<Widget> footerChild;
+
+  /// 阶段颜色映射
+  final Map<SleepStageTypeEnum, Color>? stageColors;
+
+  /// 日期格式化函数
+  final String Function(DateTime)? dateFormatter;
 
   /// 回调函数：当指示器指向的阶段发生变化时调用
-  final void Function(SleepStageDetails)? onChange;
+  final void Function(SleepStageChartSegment)? onChange;
 
   /// 回调函数：当指示器移动时调用
-  final void Function(SleepStageDetails)? onMove;
+  final void Function(SleepStageChartSegment)? onMove;
 
   /// 回调函数：当长按指示器时调用
-  final void Function(SleepStageDetails)? onLongPress;
+  final void Function(SleepStageChartSegment)? onLongPress;
 
   /// 回调函数：当点击指示器时调用
-  final void Function(SleepStageDetails)? onClickStage;
+  final void Function(SleepStageChartSegment)? onClickStage;
 
   const SleepStageChart({
     super.key,
-    required this.details,
+    required this.data,
     required this.dateFrom,
     required this.dateTo,
-    required this.heightUnitRatio,
+    required this.stageHeightRatio,
+    required this.stageVerticalGapRatio,
     required this.backgroundColor,
-    this.borderRadius = 8.0,
-    this.connectorLineWidth = 2.0,
-    this.horizontalLineStyle =
-        const SleepStageChartLineStyle(width: 5.0, space: 3.0),
-    this.verticalLineStyle =
-        const SleepStageChartLineStyle(width: 5.0, space: 3.0),
-    this.horizontalLineCount = 8,
-    this.dividerPaintStyle = const SleepStageChartPaintStyle(
-      color: Color(0xFFEEEEEE),
-      strokeWidth: 1.0,
-      style: PaintingStyle.stroke,
-      strokeCap: StrokeCap.round,
-    ),
-    this.stageColors,
-    this.dateFormatter,
+    this.borderRadius = 4.0,
+    this.connectorLineWidth = 1.0,
+    this.horizontalLineStyle = defaultLineStyle,
+    this.verticalLineStyle = defaultLineStyle,
     this.verticalLineVisible = true,
     this.horizontalLineVisible = true,
+    this.verticalNodes = const [],
+    this.horizontalNodes = const [0.0, 0.25, 0.5, 0.75, 1.0],
     this.hasTooltip = true,
     this.hasTooltipIndicator = true,
-    this.allDayModel = false,
-    this.minuteInterval = 360,
-    this.bottomChild = const [],
-    this.xAxisBottomHeight = 20,
+    this.allDayMode = false,
+    this.footerHeight = 40.0,
+    this.footerChild = const [],
+    this.stageColors,
+    this.dateFormatter,
     this.onChange,
     this.onMove,
     this.onLongPress,
@@ -132,27 +125,29 @@ class _SleepStageChartState extends State<SleepStageChart> {
   bool _isIndicatorVisible = false;
 
   /// 当前指示器所在的睡眠阶段
-  SleepStageDetails? _currentStage;
+  SleepStageChartSegment? _currentStage;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        /// 图表区域
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // 高度
-              double maxH = widget.bottomChild.isEmpty
+              /// 计算容器高度
+              final double maxH = widget.footerChild.isEmpty
                   ? constraints.maxHeight
-                  : constraints.maxHeight - widget.xAxisBottomHeight;
-              // 首次初始化时设置指示器位置为中间
+                  : constraints.maxHeight - widget.footerHeight;
+
+              /// 首次初始化时设置指示器位置为中间
               if (_isFirstInit) {
                 _indicatorPosition = constraints.maxWidth / 2;
                 _isFirstInit = false;
               }
 
               return GestureDetector(
-                // 点击时显示指示器
+                /// 点击时显示指示器
                 onTapDown: widget.hasTooltipIndicator
                     ? (details) {
                         setState(() {
@@ -163,7 +158,8 @@ class _SleepStageChartState extends State<SleepStageChart> {
                         });
                       }
                     : null,
-                // 开始水平拖动
+
+                /// 开始水平拖动
                 onHorizontalDragStart: widget.hasTooltipIndicator
                     ? (details) {
                         setState(() {
@@ -174,7 +170,8 @@ class _SleepStageChartState extends State<SleepStageChart> {
                         });
                       }
                     : null,
-                // 水平拖动更新
+
+                /// 水平拖动更新
                 onHorizontalDragUpdate: widget.hasTooltipIndicator
                     ? (details) {
                         setState(() {
@@ -185,7 +182,8 @@ class _SleepStageChartState extends State<SleepStageChart> {
                         });
                       }
                     : null,
-                // 结束水平拖动
+
+                /// 结束水平拖动
                 onHorizontalDragEnd: widget.hasTooltipIndicator
                     ? (details) {
                         // 拖动结束后隐藏指示器
@@ -194,7 +192,8 @@ class _SleepStageChartState extends State<SleepStageChart> {
                         });
                       }
                     : null,
-                // 点击结束时隐藏指示器（可选，取决于是否希望点击后指示器保持显示）
+
+                /// 点击结束时隐藏指示器（可选，取决于是否希望点击后指示器保持显示）
                 onTapUp: widget.hasTooltipIndicator
                     ? (details) {
                         // 如果希望点击后指示器消失，取消下面的注释
@@ -203,28 +202,28 @@ class _SleepStageChartState extends State<SleepStageChart> {
                         });
                       }
                     : null,
+
+                /// 图表绘制
                 child: CustomPaint(
                   painter: SleepStageChartPainter(
-                    heightUnitRatio: widget.heightUnitRatio,
+                    stageHeightRatio: widget.stageHeightRatio,
+                    stageVerticalGapRatio: widget.stageVerticalGapRatio,
                     backgroundColor: widget.backgroundColor,
-                    details: widget.details,
+                    data: widget.data,
                     startTime: widget.dateFrom,
                     endTime: widget.dateTo,
                     borderRadius: widget.borderRadius,
                     connectorLineWidth: widget.connectorLineWidth,
                     horizontalLineStyle: widget.horizontalLineStyle,
                     verticalLineStyle: widget.verticalLineStyle,
-                    horizontalLineCount: widget.horizontalLineCount,
-                    dividerPaintStyle: widget.dividerPaintStyle,
                     stageColors: widget.stageColors,
                     dateFormatter: widget.dateFormatter,
                     indicatorPosition: _indicatorPosition,
-                    showHorizontalLine: widget.horizontalLineVisible,
-                    showVerticalLine: widget.verticalLineVisible,
+                    horizontalLineVisible: widget.horizontalLineVisible,
+                    verticalLineVisible: widget.verticalLineVisible,
                     hasIndicator: widget.hasTooltipIndicator,
-                    isIndicatorVisible: _isIndicatorVisible,
-                    allDayModel: widget.allDayModel,
-                    minuteInterval: widget.minuteInterval,
+                    indicatorVisible: _isIndicatorVisible,
+                    allDayMode: widget.allDayMode,
                   ),
                   size: Size(constraints.maxWidth, maxH),
                 ),
@@ -232,13 +231,14 @@ class _SleepStageChartState extends State<SleepStageChart> {
             },
           ),
         ),
-        // 底部信息
-        if (widget.bottomChild.isNotEmpty)
+
+        /// 底部信息
+        if (widget.footerChild.isNotEmpty)
           SizedBox(
-            height: widget.xAxisBottomHeight,
+            height: widget.footerHeight,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: widget.bottomChild,
+              children: widget.footerChild,
             ),
           ),
       ],
@@ -247,17 +247,17 @@ class _SleepStageChartState extends State<SleepStageChart> {
 
   /// 检查当前指示器所在的睡眠阶段，并在变化时触发回调
   void _checkCurrentStage(double parentWidth) {
-    if (!widget.hasTooltipIndicator || widget.details.isEmpty) return;
+    if (!widget.hasTooltipIndicator || widget.data.isEmpty) return;
 
     final totalDurationInSeconds =
         widget.dateTo.difference(widget.dateFrom).inSeconds;
     if (totalDurationInSeconds <= 0) return;
 
     final pixelsPerSecond = parentWidth / totalDurationInSeconds;
-    SleepStageDetails? newStage;
+    SleepStageChartSegment? newStage;
 
-    for (int i = 0; i < widget.details.length; i++) {
-      final detail = widget.details[i];
+    for (int i = 0; i < widget.data.length; i++) {
+      final detail = widget.data[i];
       final barLeft =
           detail.start.difference(widget.dateFrom).inSeconds * pixelsPerSecond;
       final barWidth =
@@ -270,7 +270,7 @@ class _SleepStageChartState extends State<SleepStageChart> {
       }
     }
 
-    // 如果阶段发生变化
+    /// 如果阶段发生变化
     if (newStage != null && newStage != _currentStage) {
       // 回调函数不为空，则触发回调
       if (widget.onChange != null) {
@@ -278,6 +278,7 @@ class _SleepStageChartState extends State<SleepStageChart> {
       }
     }
 
+    /// 更新当前阶段
     _currentStage = newStage;
   }
 }
