@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sleep_stage_chart_example/meditation_example.dart';
 import 'package:sleep_stage_chart_example/sleep_example.dart';
+import 'package:sleep_stage_chart_example/sleep_nap_example.dart';
 import 'colors.dart';
 
 /// 示例应用的主函数
@@ -62,6 +63,11 @@ class SleepChartDemoPage extends StatelessWidget {
                   const MeditationChartCard(),
 
                   /// 留白
+                  const SizedBox(height: 16),
+
+                  /// 睡眠阶段+nap图表卡片
+                  const SleepNapChartCard(),
+
                   const SizedBox(height: 16),
                 ]),
               ),

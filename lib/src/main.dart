@@ -60,7 +60,7 @@ class SleepStageChart extends StatefulWidget {
   /// 图表背景颜色
   final Color backgroundColor;
 
-  /// 色块圆角半径，默认 8.0
+  /// 色块圆角半径，默认 4.0
   final double borderRadius;
 
   /// 相邻色块间连接线的宽度，默认 1.0
@@ -205,7 +205,7 @@ class SleepStageChart extends StatefulWidget {
     required this.stageHeightRatio,
     required this.stageVerticalGapRatio,
     required this.backgroundColor,
-    this.borderRadius = 8.0,
+    this.borderRadius = 4.0,
     this.connectorLineWidth = 1.0,
     this.horizontalLineStyle = defaultLineStyle,
     this.verticalLineStyle = defaultLineStyle,

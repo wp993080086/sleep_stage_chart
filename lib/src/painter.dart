@@ -27,7 +27,7 @@ class SleepStageChartPainter extends CustomPainter {
   /// 图表背景颜色
   final Color backgroundColor;
 
-  /// 色块圆角半径，默认 8.0
+  /// 色块圆角半径，默认 4.0
   final double borderRadius;
 
   /// 图表开始时间（X轴起点）
@@ -111,7 +111,7 @@ class SleepStageChartPainter extends CustomPainter {
     required this.backgroundColor,
     required this.startTime,
     required this.endTime,
-    this.borderRadius = 8.0,
+    this.borderRadius = 4.0,
     this.connectorLineWidth = 1.0,
     this.horizontalLineStyle = defaultLineStyle,
     this.verticalLineStyle = defaultLineStyle,
@@ -433,24 +433,149 @@ class SleepStageChartPainter extends CustomPainter {
     // 第一步：绘制相邻色块之间的连接线
     _drawConnectorLines(canvas, pixelsPerSecond, gapHeight);
 
-    // 第二步：绘制各个睡眠阶段的色块
+    // 第二步：绘制渐变 unknown 色块（在普通色块之前绘制，确保在最底层）
+    _drawUnknownGradientBars(canvas, pixelsPerSecond, gapHeight, size.width);
+
+    // 第三步：绘制各个睡眠阶段的色块（跳过与 awake 相邻的 unknown）
     _drawStageBars(canvas, pixelsPerSecond, gapHeight, size.width);
+  }
+
+  /// 检测指定索引的 segment 是否需要绘制为渐变 unknown 色块
+  ///
+  /// 条件：
+  /// - 当前 segment 是 unknown
+  /// - 前一个 segment 是 awake，或后一个 segment 是 awake
+  bool _isUnknownNeedingGradient(int index) {
+    if (index < 0 || index >= data.length) return false;
+
+    final segment = data[index];
+    if (segment.type != SleepStageTypeEnum.unknown) return false;
+
+    // 检查前一个 segment
+    if (index > 0 && data[index - 1].type == SleepStageTypeEnum.awake) {
+      return true;
+    }
+
+    // 检查后一个 segment
+    if (index < data.length - 1 &&
+        data[index + 1].type == SleepStageTypeEnum.awake) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// 绘制渐变 unknown 色块
+  ///
+  /// 当 unknown 与 awake 相邻时，在底层绘制一个跨越 core+rem+deep 的渐变色块
+  void _drawUnknownGradientBars(Canvas canvas, double pixelsPerSecond,
+      double gapHeight, double maxWidth) {
+    for (int i = 0; i < data.length; i++) {
+      // 只处理需要渐变的 unknown
+      if (!_isUnknownNeedingGradient(i)) continue;
+
+      final segment = data[i];
+
+      // 计算色块位置和尺寸
+      final barLeft =
+          segment.start.difference(startTime).inSeconds * pixelsPerSecond;
+      final barWidth =
+          segment.end.difference(segment.start).inSeconds * pixelsPerSecond;
+
+      // 跳过无效宽度
+      if (barWidth <= 0) continue;
+
+      // 计算实际绘制宽度，确保不超出画布边界
+      final drawWidth =
+          (barLeft + barWidth > maxWidth) ? maxWidth - barLeft : barWidth;
+
+      // 获取 rem, core, deep 的颜色
+      final remColor = stageColors[SleepStageTypeEnum.rem];
+      final coreColor = stageColors[SleepStageTypeEnum.core];
+      final deepColor = stageColors[SleepStageTypeEnum.deep];
+
+      if (remColor == null || coreColor == null || deepColor == null) continue;
+
+      // 计算渐变色块的位置（从 rem 到 deep）
+      // 根据默认顺序：awake, core, rem, deep
+      // 渐变色块需要覆盖 core, rem, deep 三个位置
+      final order = stageOrder ?? defaultStageOrder;
+      final coreIndex = order.indexOf(SleepStageTypeEnum.core);
+      final remIndex = order.indexOf(SleepStageTypeEnum.rem);
+      final deepIndex = order.indexOf(SleepStageTypeEnum.deep);
+
+      // 渐变色块顶部 Y（取 core 和 rem 中较小的索引位置）
+      final gradientTopIndex = coreIndex < remIndex ? coreIndex : remIndex;
+      final gradientTopY =
+          _bottomPadding + gradientTopIndex * (_barHeight + gapHeight);
+
+      // 渐变色块高度（3 个色块 + 2 个间距）
+      final gradientHeight = _barHeight * 3 + gapHeight * 2;
+
+      // 创建圆角矩形（与其他色块保持一致的圆角）
+      final rect =
+          Rect.fromLTWH(barLeft, gradientTopY, drawWidth, gradientHeight);
+      final rrect = RRect.fromRectAndRadius(
+        rect,
+        Radius.circular(borderRadius),
+      );
+
+      final paint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            remColor.withAlpha(77),
+            coreColor.withAlpha(77),
+            deepColor.withAlpha(77),
+          ],
+          // 设置颜色停止点，确保渐变均匀分布
+          stops: const [0.0, 0.5, 1.0],
+        ).createShader(rect)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawRRect(rrect, paint);
+    }
   }
 
   /// 绘制相邻色块间的渐变连接线
   ///
-  /// 当两个色块首尾相连时，在它们之间绘制一条渐变连接线
+  /// 连接线从n色块底部伸出，连接到n+1色块的顶部
+  /// 如果n色块和n+1色块间隔大于1分钟则算断开，不存在连接线
   void _drawConnectorLines(
       Canvas canvas, double pixelsPerSecond, double gapHeight) {
     for (int i = 1; i < data.length; i++) {
       final prevSegment = data[i - 1];
       final currentSegment = data[i];
 
-      // 只有当两个色块首尾相连时才绘制连接线
-      if (prevSegment.end == currentSegment.start) {
-        final connectorLeft =
-            prevSegment.end.difference(startTime).inSeconds * pixelsPerSecond;
+      // 计算两个色块之间的时间间隔
+      final gapDuration = currentSegment.start.difference(prevSegment.end);
+      // 如果间隔大于1分钟，则算断开，不绘制连接线
+      if (gapDuration.inMinutes > 1) continue;
 
+      // 计算连接线的水平位置（位于n色块的右下点）
+      final connectorLeft =
+          prevSegment.end.difference(startTime).inSeconds * pixelsPerSecond -
+              connectorLineWidth;
+
+      // 判断是否是 awake 与 unknown 相邻的情况
+      final isAwakeUnknownPair =
+          (prevSegment.type == SleepStageTypeEnum.awake &&
+                  currentSegment.type == SleepStageTypeEnum.unknown) ||
+              (prevSegment.type == SleepStageTypeEnum.unknown &&
+                  currentSegment.type == SleepStageTypeEnum.awake);
+
+      if (isAwakeUnknownPair && _isUnknownNeedingGradient(i)) {
+        // awake 与渐变色块之间的连接线
+        _drawAwakeToGradientConnector(
+          canvas: canvas,
+          awakeIndex: prevSegment.type == SleepStageTypeEnum.awake ? i - 1 : i,
+          left: connectorLeft,
+          gapHeight: gapHeight,
+        );
+      } else if (!_isUnknownNeedingGradient(i - 1) &&
+          !_isUnknownNeedingGradient(i)) {
+        // 普通连接线
         _drawSingleConnectorLine(
           canvas: canvas,
           currentIndex: i,
@@ -461,9 +586,91 @@ class SleepStageChartPainter extends CustomPainter {
     }
   }
 
+  /// 绘制 awake 与渐变色块之间的连接线
+  ///
+  /// 从n色块(awake)底部伸出，连接到n+1色块(渐变色块)顶部
+  /// 支持awake在上渐变色块在下，或awake在下渐变色块在上的双向连接
+  void _drawAwakeToGradientConnector({
+    required Canvas canvas,
+    required int awakeIndex,
+    required double left,
+    required double gapHeight,
+  }) {
+    // 计算 awake 色块的 Y 坐标
+    final awakeBarTopY = _calculateBarTopY(SleepStageTypeEnum.awake, gapHeight);
+
+    // 计算渐变色块的顶部和底部 Y 坐标
+    final order = stageOrder ?? defaultStageOrder;
+    final coreIndex = order.indexOf(SleepStageTypeEnum.core);
+    final remIndex = order.indexOf(SleepStageTypeEnum.rem);
+    final deepIndex = order.indexOf(SleepStageTypeEnum.deep);
+
+    // 渐变色块顶部（取 core 和 rem 中较小的索引位置）
+    final gradientTopIndex = coreIndex < remIndex ? coreIndex : remIndex;
+    final gradientTopY =
+        _bottomPadding + gradientTopIndex * (_barHeight + gapHeight);
+
+    // 渐变色块底部（取 deep 的位置）
+    final gradientBottomY = gradientTopY + _barHeight * 3 + gapHeight * 2;
+
+    // 计算圆角偏移量（连接线需要延伸到圆角内部）
+    final cornerOffset = borderRadius * 0.7;
+
+    // 判断 awake 和渐变色块的相对位置
+    final isAwakeAbove = awakeBarTopY < gradientTopY;
+
+    // 计算连接线的顶部和底部 Y 坐标
+    // 连接线从n色块底部伸出，连接到n+1色块顶部，并延伸到圆角内部
+    final lineTopY = isAwakeAbove
+        ? awakeBarTopY + _barHeight - cornerOffset // awake在上：从awake底部圆角处开始
+        : gradientBottomY - cornerOffset; // awake在下：从渐变色块底部圆角处开始
+    final lineBottomY = isAwakeAbove
+        ? gradientTopY + cornerOffset // awake在上：到渐变色块顶部圆角处结束
+        : awakeBarTopY + cornerOffset; // awake在下：到awake顶部圆角处结束
+
+    // 如果连接线高度无效，跳过
+    if (lineTopY >= lineBottomY) return;
+
+    // 获取 awake 颜色
+    final awakeColor = stageColors[SleepStageTypeEnum.awake];
+    if (awakeColor == null) return;
+
+    // 获取渐变色块对应位置的颜色
+    final remColor = stageColors[SleepStageTypeEnum.rem];
+    final deepColor = stageColors[SleepStageTypeEnum.deep];
+    if (remColor == null || deepColor == null) return;
+
+    final awakeColorWithAlpha = awakeColor.withAlpha(123);
+    final gradientColorWithAlpha = isAwakeAbove
+        ? remColor.withAlpha(77) // awake在上：连接渐变色块顶部(rem色)
+        : deepColor.withAlpha(77); // awake在下：连接渐变色块底部(deep色)
+
+    // 根据相对位置确定渐变方向
+    final gradientColors = isAwakeAbove
+        ? [awakeColorWithAlpha, gradientColorWithAlpha] // awake在上：从上到下渐变
+        : [gradientColorWithAlpha, awakeColorWithAlpha]; // awake在下：从下到上渐变
+
+    final lineRect = Rect.fromLTWH(
+      left,
+      lineTopY,
+      connectorLineWidth,
+      lineBottomY - lineTopY,
+    );
+
+    final connectPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: gradientColors,
+      ).createShader(lineRect);
+
+    canvas.drawRect(lineRect, connectPaint);
+  }
+
   /// 绘制单个连接线
   ///
-  /// 在两个相邻的睡眠阶段色块之间绘制渐变连接线
+  /// 连接线从n色块底部伸出，连接到n+1色块顶部
+  /// 支持n在上n+1在下，或n在下n+1在上的双向连接
   void _drawSingleConnectorLine({
     required Canvas canvas,
     required int currentIndex,
@@ -476,17 +683,20 @@ class SleepStageChartPainter extends CustomPainter {
     final currentBarTopY =
         _calculateBarTopY(data[currentIndex].type, gapHeight);
 
-    // 计算圆角偏移量（避免连接线覆盖圆角区域）
+    // 计算圆角偏移量（连接线需要延伸到圆角内部）
     final cornerOffset = borderRadius * 0.7;
 
+    // 判断两个色块的相对位置
+    final isPrevAbove = prevBarTopY < currentBarTopY;
+
     // 计算连接线的顶部和底部 Y 坐标
-    final lineTopY =
-        (prevBarTopY < currentBarTopY ? prevBarTopY : currentBarTopY) +
-            cornerOffset;
-    final lineBottomY =
-        (prevBarTopY < currentBarTopY ? currentBarTopY : prevBarTopY) +
-            _barHeight -
-            cornerOffset;
+    // 连接线从n色块底部伸出，连接到n+1色块顶部，并延伸到圆角内部
+    final lineTopY = isPrevAbove
+        ? prevBarTopY + _barHeight - cornerOffset // n在上：从n底部圆角处开始
+        : currentBarTopY + _barHeight - cornerOffset; // n在下：从n+1底部圆角处开始
+    final lineBottomY = isPrevAbove
+        ? currentBarTopY + cornerOffset // n在上：到n+1顶部圆角处结束
+        : prevBarTopY + cornerOffset; // n在下：到n顶部圆角处结束
 
     // 如果连接线高度无效，跳过
     if (lineTopY >= lineBottomY) return;
@@ -502,9 +712,9 @@ class SleepStageChartPainter extends CustomPainter {
     final currentColorWithAlpha = currentColor.withAlpha(123);
 
     // 根据 Y 坐标顺序确定渐变方向
-    final gradientColors = prevBarTopY < currentBarTopY
-        ? [prevColorWithAlpha, currentColorWithAlpha] // 从上到下渐变
-        : [currentColorWithAlpha, prevColorWithAlpha]; // 从下到上渐变
+    final gradientColors = isPrevAbove
+        ? [prevColorWithAlpha, currentColorWithAlpha] // n在上：从上到下渐变
+        : [currentColorWithAlpha, prevColorWithAlpha]; // n在下：从下到上渐变
 
     final lineRect = Rect.fromLTWH(
       left,
@@ -525,10 +735,16 @@ class SleepStageChartPainter extends CustomPainter {
 
   /// 绘制睡眠阶段色块
   ///
-  /// 遍历 [data] 中的每个阶段，计算位置和尺寸后绘制
+  /// 遍历 [data] 中的每个阶段，计算位置和尺寸后绘制。
+  /// 跳过与 awake 相邻的 unknown（这些由 _drawUnknownGradientBars 绘制）
   void _drawStageBars(Canvas canvas, double pixelsPerSecond, double gapHeight,
       double maxWidth) {
-    for (final segment in data) {
+    for (int i = 0; i < data.length; i++) {
+      final segment = data[i];
+
+      // 跳过与 awake 相邻的 unknown（已在渐变层绘制）
+      if (_isUnknownNeedingGradient(i)) continue;
+
       // 计算色块位置和尺寸
       final barLeft =
           segment.start.difference(startTime).inSeconds * pixelsPerSecond;
