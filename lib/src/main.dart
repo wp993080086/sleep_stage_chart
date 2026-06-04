@@ -106,6 +106,18 @@ class SleepStageChart extends StatefulWidget {
   /// Tooltip 内边距，默认 EdgeInsets.symmetric(horizontal: 12, vertical: 6)
   final EdgeInsetsGeometry? tooltipPadding;
 
+  /// Tooltip 背景颜色，默认使用阶段颜色
+  final Color? tooltipBackgroundColor;
+
+  /// Tooltip 圆角半径，默认 12.0
+  final double tooltipBorderRadius;
+
+  /// 主文字样式（持续时长），默认白色 16px 加粗
+  final TextStyle? tooltipPrimaryTextStyle;
+
+  /// 次文字样式（阶段名称和时间范围），默认白色 13px 中等粗细
+  final TextStyle? tooltipSecondaryTextStyle;
+
   /// ==========================================================================
   /// 构造参数 - 模式
   /// ==========================================================================
@@ -207,6 +219,10 @@ class SleepStageChart extends StatefulWidget {
     this.allDayColor = const Color(0xFF43CAC4),
     this.tooltipOffset = 0.0,
     this.tooltipPadding,
+    this.tooltipBackgroundColor,
+    this.tooltipBorderRadius = 12.0,
+    this.tooltipPrimaryTextStyle,
+    this.tooltipSecondaryTextStyle,
     this.footerHeight = 40.0,
     this.footerChildren = const [],
     this.stageColors,
@@ -523,6 +539,10 @@ class _SleepStageChartState extends State<SleepStageChart> {
             stageName: stageName,
             timeRangeText: timeRangeText,
             tooltipPadding: widget.tooltipPadding,
+            tooltipBackgroundColor: widget.tooltipBackgroundColor,
+            tooltipBorderRadius: widget.tooltipBorderRadius,
+            tooltipPrimaryTextStyle: widget.tooltipPrimaryTextStyle,
+            tooltipSecondaryTextStyle: widget.tooltipSecondaryTextStyle,
           ),
         ),
       ],
@@ -611,6 +631,18 @@ class _TooltipPositioner extends StatefulWidget {
   /// Tooltip 内边距
   final EdgeInsetsGeometry? tooltipPadding;
 
+  /// Tooltip 背景颜色（覆盖阶段颜色）
+  final Color? tooltipBackgroundColor;
+
+  /// Tooltip 圆角半径
+  final double tooltipBorderRadius;
+
+  /// 主文字样式（持续时长）
+  final TextStyle? tooltipPrimaryTextStyle;
+
+  /// 次文字样式（阶段名称和时间范围）
+  final TextStyle? tooltipSecondaryTextStyle;
+
   const _TooltipPositioner({
     required this.barLeft,
     required this.barWidth,
@@ -620,6 +652,10 @@ class _TooltipPositioner extends StatefulWidget {
     required this.stageName,
     required this.timeRangeText,
     this.tooltipPadding,
+    this.tooltipBackgroundColor,
+    required this.tooltipBorderRadius,
+    this.tooltipPrimaryTextStyle,
+    this.tooltipSecondaryTextStyle,
   });
 
   @override
@@ -674,14 +710,31 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
     // 计算左边距
     final leftPadding = _calculateLeftPadding(idealCenterX);
 
+    // 确定背景颜色（优先级：自定义 > 阶段颜色）
+    final backgroundColor = widget.tooltipBackgroundColor ?? widget.stageColor;
+
+    // 默认主文字样式
+    final defaultPrimaryStyle = const TextStyle(
+      color: Colors.white,
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+    );
+
+    // 默认次文字样式
+    final defaultSecondaryStyle = const TextStyle(
+      color: Colors.white,
+      fontSize: 13,
+      fontWeight: FontWeight.w500,
+    );
+
     return Padding(
       padding: EdgeInsets.only(left: leftPadding),
       child: UnconstrainedBox(
         child: Container(
           key: _tooltipKey,
           decoration: BoxDecoration(
-            color: widget.stageColor,
-            borderRadius: BorderRadius.circular(12),
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(widget.tooltipBorderRadius),
           ),
           padding: widget.tooltipPadding ??
               const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -689,24 +742,17 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 持续时长
+              // 持续时长（主文字）
               Text(
                 widget.durationText,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: widget.tooltipPrimaryTextStyle ?? defaultPrimaryStyle,
               ),
               const SizedBox(height: 4),
-              // 阶段名称和时间范围
+              // 阶段名称和时间范围（次文字）
               Text(
                 '${widget.stageName} ${widget.timeRangeText}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
+                style:
+                    widget.tooltipSecondaryTextStyle ?? defaultSecondaryStyle,
                 overflow: TextOverflow.ellipsis,
               ),
             ],
