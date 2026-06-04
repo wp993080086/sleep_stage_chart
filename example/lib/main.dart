@@ -281,6 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     dateFrom: meditationStartTime,
                     // 整个图表的结束时间
                     dateTo: meditationEndTime,
+                    hasTooltip: true,
                     // 是否显示指示器
                     hasTooltipIndicator: true,
                     // 回调函数

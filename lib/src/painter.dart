@@ -60,6 +60,9 @@ class SleepStageChartPainter extends CustomPainter {
   /// 整天模式下的色块颜色
   final Color? allDayColor;
 
+  /// Tooltip 垂直位置偏移（正数凸出顶部，负数距离顶部）
+  final double tooltipPadding;
+
   /// 睡眠阶段颜色映射
   final Map<SleepStageTypeEnum, Color> stageColors;
 
@@ -99,6 +102,7 @@ class SleepStageChartPainter extends CustomPainter {
     this.indicatorVisible = false,
     this.allDayMode = false,
     this.allDayColor,
+    this.tooltipPadding = 0.0,
     Map<SleepStageTypeEnum, Color>? stageColors,
     this.stageOrder = defaultStageOrder,
     String Function(DateTime)? dateFormatter,
@@ -141,11 +145,9 @@ class SleepStageChartPainter extends CustomPainter {
       _drawBarArea(canvas, size, gapHeight);
     }
 
-    if (hasIndicator && indicatorVisible) {
+    if (hasIndicator && indicatorVisible && data.isNotEmpty) {
       _drawIndicator(canvas, size);
-      if (!allDayMode && data.isNotEmpty) {
-        _drawTitle(canvas, size);
-      }
+      _drawTitle(canvas, size);
     }
   }
 
@@ -479,10 +481,20 @@ class SleepStageChartPainter extends CustomPainter {
       bgX = size.width - bgWidth;
     }
 
-    const bgY = 0.0;
+    // 计算 Tooltip Y 坐标，应用 tooltipPadding
+    // 正数 = 凸出顶部（Y为负），负数 = 距离顶部（Y为正）
+    final bgY = -tooltipPadding;
 
-    final stageColor = stageColors[currentStage.type];
-    if (stageColor == null) return;
+    // 获取颜色（allDayMode 时使用 allDayColor 或 unknown 颜色）
+    final Color stageColor;
+    if (allDayMode) {
+      stageColor =
+          allDayColor ?? stageColors[SleepStageTypeEnum.unknown] ?? Colors.grey;
+    } else {
+      final color = stageColors[currentStage.type];
+      if (color == null) return;
+      stageColor = color;
+    }
 
     final bgPaint = Paint()
       ..color = stageColor
@@ -495,11 +507,11 @@ class SleepStageChartPainter extends CustomPainter {
     canvas.drawRRect(bgRect, bgPaint);
 
     final x = bgX + 12;
-    const y = bgY + 6;
+    final y = bgY + 6;
     textPainter.paint(canvas, Offset(x, y));
 
     final timeX = bgX + 12;
-    const timeY = bgY + 28;
+    final timeY = bgY + 28;
     timeRangePainter.paint(canvas, Offset(timeX, timeY));
   }
 
