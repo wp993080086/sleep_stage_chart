@@ -2,99 +2,189 @@ import 'package:flutter/material.dart';
 import 'model.dart';
 import 'painter.dart';
 
-/// 睡眠阶段图表
-/// 用于显示睡眠时长和各个阶段的详细信息
+/// ============================================================================
+/// 睡眠阶段图表组件
+/// ============================================================================
+
+/// 睡眠阶段图表组件
+///
+/// 用于显示睡眠时长和各个阶段的详细信息，支持：
+/// - 正常模式：显示多个睡眠阶段色块，按类型分层
+/// - 整天模式：显示单个居中色块，用于全天概览
+/// - 交互功能：触摸显示 Tooltip 和指示器
+/// - 自定义样式：颜色、网格线、阶段顺序等
+///
+/// 使用示例：
+/// ```dart
+/// SleepStageChart(
+///   data: sleepData,
+///   dateFrom: startTime,
+///   dateTo: endTime,
+///   stageHeightRatio: 0.2,
+///   stageVerticalGapRatio: 0.05,
+///   backgroundColor: Colors.white,
+/// )
+/// ```
 class SleepStageChart extends StatefulWidget {
-  /// 睡眠阶段数据
+  /// ==========================================================================
+  /// 构造参数 - 数据
+  /// ==========================================================================
+
+  /// 睡眠阶段数据列表
   final List<SleepStageChartSegment> data;
 
-  /// 起始日期
+  /// 图表开始时间（X轴起点）
   final DateTime dateFrom;
 
-  /// 截至日期
+  /// 图表结束时间（X轴终点）
   final DateTime dateTo;
 
-  /// 每个阶段高度比例 0.0 ~ 0.25 （图表的总高度为 容器总高度-水平轴底部高度 = 1.0）
+  /// ==========================================================================
+  /// 构造参数 - 布局
+  /// ==========================================================================
+
+  /// 单个色块高度占图表总高度的比例，范围 (0, 0.25]
+  ///
+  /// 限制为最大 0.25，因为 4 个色块 × 0.25 = 1.0（总高度）
   final double stageHeightRatio;
 
-  /// 每个阶段色块垂直间隔比例 0.0 ~ 1.0 （图表的总高度为 容器总高度-水平轴底部高度 = 1.0）
+  /// 相邻色块之间的间距占图表总高度的比例，范围 [0, 1.0]
+  ///
+  /// 所有色块高度 + 所有间距不能超过 1.0
   final double stageVerticalGapRatio;
 
-  /// 背景颜色
+  /// ==========================================================================
+  /// 构造参数 - 样式
+  /// ==========================================================================
+
+  /// 图表背景颜色
   final Color backgroundColor;
 
-  /// 色块圆角，默认 8.0
+  /// 色块圆角半径，默认 8.0
   final double borderRadius;
 
-  /// 色块连接线宽度，默认 1.0
+  /// 相邻色块间连接线的宽度，默认 1.0
   final double connectorLineWidth;
 
-  /// 水平线样式，默认 defaultLineStyle
+  /// 水平网格线样式，默认 [defaultLineStyle]
   final SleepStageChartLineStyle horizontalLineStyle;
 
-  /// 垂直线样式，默认 defaultLineStyle
+  /// 垂直网格线样式，默认 [defaultLineStyle]
   final SleepStageChartLineStyle verticalLineStyle;
 
-  /// 水平轴节点 0.0 ~ 1.0，默认 []
+  /// 水平线节点位置列表，范围 [0.0, 1.0]，默认 []
+  ///
+  /// 0.0 表示顶部，1.0 表示底部
   final List<double> horizontalNodes;
 
-  /// 垂直轴节点 0.0 ~ 1.0，默认 []
+  /// 垂直线节点位置列表，范围 [0.0, 1.0]，默认 []
+  ///
+  /// 0.0 表示左侧，1.0 表示右侧
   final List<double> verticalNodes;
 
-  /// 是否显示垂直线，默认 true
+  /// 是否显示垂直网格线，默认 true
   final bool verticalLineVisible;
 
-  /// 是否显示水平线，默认 true
+  /// 是否显示水平网格线，默认 true
   final bool horizontalLineVisible;
 
-  /// 是否包含Tooltip，默认 true
+  /// ==========================================================================
+  /// 构造参数 - Tooltip
+  /// ==========================================================================
+
+  /// 是否显示 Tooltip，默认 true
   final bool hasTooltip;
 
-  /// 是否包含Tooltip的指示器，默认 true
+  /// 是否显示 Tooltip 的指示器（垂直线），默认 true
   final bool hasTooltipIndicator;
 
-  /// 一整天模式，默认 false
-  final bool allDayMode;
-
-  /// 整天模式下的色块颜色,默认 #43CAC4
-  final Color? allDayColor;
-
-  /// Tooltip 垂直位置偏移（正数凸出顶部，负数距离顶部），默认 0.0
+  /// Tooltip 垂直位置偏移，默认 0.0
+  ///
+  /// 正数表示向上偏移（凸出顶部），负数表示向下偏移（距离顶部）
   final double tooltipOffset;
 
-  /// Tooltip 内边距，默认 EdgeInsets.only(left: 12, top: 6, right: 12, bottom: 6)
+  /// Tooltip 内边距，默认 EdgeInsets.symmetric(horizontal: 12, vertical: 6)
   final EdgeInsetsGeometry? tooltipPadding;
 
-  /// 水平轴底部高度，默认 40.0
-  final double footerHeight;
+  /// ==========================================================================
+  /// 构造参数 - 模式
+  /// ==========================================================================
 
-  /// 水平轴子组件集合，默认 []
-  final List<Widget> footerChild;
+  /// 是否启用整天模式，默认 false
+  ///
+  /// 整天模式下只显示一个居中的色块，用于展示全天睡眠概览
+  final bool allDayMode;
 
-  /// 阶段颜色映射
+  /// 整天模式下的色块颜色，默认 Color(0xFF43CAC4)
+  final Color? allDayColor;
+
+  /// ==========================================================================
+  /// 构造参数 - 阶段配置
+  /// ==========================================================================
+
+  /// 睡眠阶段颜色映射表
+  ///
+  /// 为每种 [SleepStageTypeEnum] 指定显示颜色
   final Map<SleepStageTypeEnum, Color>? stageColors;
 
-  /// 睡眠阶段顺序（从上到下），默认 [awake, core, rem, deep]
+  /// 睡眠阶段显示顺序（从上到下），默认 [awake, core, rem, deep]
   final List<SleepStageTypeEnum>? stageOrder;
 
+  /// ==========================================================================
+  /// 构造参数 - 格式化
+  /// ==========================================================================
+
   /// 日期格式化函数
+  ///
+  /// 用于格式化 Tooltip 中显示的日期时间
   final String Function(DateTime)? dateFormatter;
 
-  /// 阶段名称格式化函数，用于将 SleepStageTypeEnum 转换为显示文本
+  /// 阶段名称格式化函数
+  ///
+  /// 用于将 [SleepStageTypeEnum] 转换为显示文本
   final String Function(SleepStageTypeEnum)? stageNameFormatter;
 
-  /// 回调函数：当指示器指向的阶段发生变化时调用
-  final void Function(SleepStageChartSegment)? onChange;
+  /// ==========================================================================
+  /// 构造参数 - 底部区域
+  /// ==========================================================================
 
-  /// 回调函数：当指示器移动时调用
-  final void Function(SleepStageChartSegment)? onMove;
+  /// 底部区域高度，默认 40.0
+  final double footerHeight;
 
-  /// 回调函数：当长按指示器时调用
-  final void Function(SleepStageChartSegment)? onLongPress;
+  /// 底部区域子组件列表，默认 []
+  final List<Widget> footerChildren;
 
-  /// 回调函数：当点击指示器时调用
-  final void Function(SleepStageChartSegment)? onClickStage;
+  /// ==========================================================================
+  /// 构造参数 - 回调函数
+  /// ==========================================================================
 
+  /// 当指示器指向的阶段发生变化时调用
+  final void Function(SleepStageChartSegment)? onStageChanged;
+
+  /// 当指示器移动时调用
+  final void Function(SleepStageChartSegment)? onIndicatorMove;
+
+  /// 当长按指示器时调用
+  final void Function(SleepStageChartSegment)? onIndicatorLongPress;
+
+  /// 当点击阶段色块时调用
+  final void Function(SleepStageChartSegment)? onStageTap;
+
+  /// ==========================================================================
+  /// 构造函数
+  /// ==========================================================================
+
+  /// 创建睡眠阶段图表组件
+  ///
+  /// 必需参数：
+  /// - [data] - 睡眠阶段数据
+  /// - [dateFrom] - 开始时间
+  /// - [dateTo] - 结束时间
+  /// - [stageHeightRatio] - 色块高度比例
+  /// - [stageVerticalGapRatio] - 色块间距比例
+  /// - [backgroundColor] - 背景颜色
+  ///
+  /// 可选参数：使用默认值
   const SleepStageChart({
     super.key,
     required this.data,
@@ -118,35 +208,49 @@ class SleepStageChart extends StatefulWidget {
     this.tooltipOffset = 0.0,
     this.tooltipPadding,
     this.footerHeight = 40.0,
-    this.footerChild = const [],
+    this.footerChildren = const [],
     this.stageColors,
     this.stageOrder,
     this.dateFormatter,
     this.stageNameFormatter,
-    this.onChange,
-    this.onMove,
-    this.onLongPress,
-    this.onClickStage,
-  })  : assert(stageHeightRatio > 0 && stageHeightRatio <= 0.25,
-            'stageHeightRatio 必须在 (0, 0.25] 范围内，因为 4 × stageHeightRatio ≤ 1.0'),
-        assert(stageVerticalGapRatio >= 0, 'stageVerticalGapRatio 必须 ≥ 0'),
+    this.onStageChanged,
+    this.onIndicatorMove,
+    this.onIndicatorLongPress,
+    this.onStageTap,
+  })  : assert(
+          stageHeightRatio > 0 && stageHeightRatio <= 0.25,
+          'stageHeightRatio 必须在 (0, 0.25] 范围内，'
+          '因为 4 × stageHeightRatio ≤ 1.0',
+        ),
+        assert(
+          stageVerticalGapRatio >= 0,
+          'stageVerticalGapRatio 必须 ≥ 0',
+        ),
         assert(
           (stageHeightRatio * 4) + (stageVerticalGapRatio * 3) <= 1.0,
-          'stageHeightRatio × 4 + stageVerticalGapRatio × 3 不能超过 1.0，'
-          '当前值为 ${(stageHeightRatio * 4) + (stageVerticalGapRatio * 3)}',
+          'stageHeightRatio × 4 + stageVerticalGapRatio × 3 不能超过 1.0',
         );
 
   @override
   State<SleepStageChart> createState() => _SleepStageChartState();
 }
 
-/// 睡眠时长图表组件状态类，管理图表的交互状态和指示器位置
+/// ============================================================================
+/// 组件状态类
+/// ============================================================================
+
+/// 睡眠阶段图表组件状态类
+///
+/// 管理图表的交互状态和指示器位置，包括：
+/// - 指示器位置跟踪
+/// - 当前阶段检测
+/// - Tooltip 显示控制
 class _SleepStageChartState extends State<SleepStageChart> {
-  /// 指示器位置
-  double _indicatorPosition = 0.0;
+  /// 指示器当前 X 坐标位置（相对于图表左边缘）
+  double _indicatorPositionX = 0.0;
 
   /// 是否首次初始化
-  bool _isFirstInit = true;
+  bool _isFirstInitialization = true;
 
   /// 指示器是否可见
   bool _isIndicatorVisible = false;
@@ -154,84 +258,53 @@ class _SleepStageChartState extends State<SleepStageChart> {
   /// 当前指示器所在的睡眠阶段
   SleepStageChartSegment? _currentStage;
 
+  /// ==========================================================================
+  /// 构建方法
+  /// ==========================================================================
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        /// 图表区域
+        // 图表区域
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              /// 计算容器高度
-              final double maxH = constraints.maxHeight;
+              final maxHeight = constraints.maxHeight;
+              final maxWidth = constraints.maxWidth;
 
-              /// 首次初始化时设置指示器位置为中间
-              if (_isFirstInit) {
-                _indicatorPosition = constraints.maxWidth / 2;
-                _isFirstInit = false;
+              // 首次初始化时设置指示器位置为中间
+              if (_isFirstInitialization) {
+                _indicatorPositionX = maxWidth / 2;
+                _isFirstInitialization = false;
               }
 
               return GestureDetector(
-                /// 点击时显示指示器
+                // 点击时显示指示器
                 onTapDown: widget.hasTooltipIndicator
-                    ? (details) {
-                        setState(() {
-                          _isIndicatorVisible = true;
-                          _indicatorPosition = details.localPosition.dx
-                              .clamp(0.0, constraints.maxWidth);
-                          _checkCurrentStage(constraints.maxWidth);
-                        });
-                      }
+                    ? (details) => _handleTapDown(details, maxWidth)
                     : null,
 
-                /// 开始水平拖动
+                // 开始水平拖动
                 onHorizontalDragStart: widget.hasTooltipIndicator
-                    ? (details) {
-                        setState(() {
-                          _isIndicatorVisible = true;
-                          _indicatorPosition = details.localPosition.dx
-                              .clamp(0.0, constraints.maxWidth);
-                          _checkCurrentStage(constraints.maxWidth);
-                        });
-                      }
+                    ? (details) => _handleDragStart(details, maxWidth)
                     : null,
 
-                /// 水平拖动更新
+                // 水平拖动更新
                 onHorizontalDragUpdate: widget.hasTooltipIndicator
-                    ? (details) {
-                        setState(() {
-                          _indicatorPosition =
-                              (_indicatorPosition + details.delta.dx)
-                                  .clamp(0.0, constraints.maxWidth);
-                          _checkCurrentStage(constraints.maxWidth);
-                        });
-                      }
+                    ? (details) => _handleDragUpdate(details, maxWidth)
                     : null,
 
-                /// 结束水平拖动
-                onHorizontalDragEnd: widget.hasTooltipIndicator
-                    ? (details) {
-                        // 拖动结束后隐藏指示器
-                        setState(() {
-                          _isIndicatorVisible = false;
-                        });
-                      }
-                    : null,
+                // 结束水平拖动
+                onHorizontalDragEnd:
+                    widget.hasTooltipIndicator ? (_) => _handleDragEnd() : null,
 
-                /// 点击结束时隐藏指示器（可选，取决于是否希望点击后指示器保持显示）
-                onTapUp: widget.hasTooltipIndicator
-                    ? (details) {
-                        // 如果希望点击后指示器消失，取消下面的注释
-                        setState(() {
-                          _isIndicatorVisible = false;
-                        });
-                      }
-                    : null,
+                // 点击结束时隐藏指示器
+                onTapUp:
+                    widget.hasTooltipIndicator ? (_) => _handleTapUp() : null,
 
-                /// 图表绘制（使用 Stack 叠加 Tooltip）
-                /// 使用 OverflowBox 包裹 Stack，允许 Tooltip 超出边界
                 child: Stack(
-                  clipBehavior: Clip.none, // 允许子组件超出边界
+                  clipBehavior: Clip.none,
                   children: [
                     // 底层：图表（使用 ClipRect 裁剪，防止图表超出）
                     ClipRect(
@@ -254,14 +327,15 @@ class _SleepStageChartState extends State<SleepStageChart> {
                           allDayMode: widget.allDayMode,
                           allDayColor: widget.allDayColor,
                         ),
-                        size: Size(constraints.maxWidth, maxH),
+                        size: Size(maxWidth, maxHeight),
                       ),
                     ),
-                    // 上层：指示器和 Tooltip（仅在启用且可见时显示）
+
+                    // 上层：指示器和 Tooltip
                     if (widget.hasTooltipIndicator &&
                         _isIndicatorVisible &&
                         _currentStage != null)
-                      _buildTooltip(constraints.maxWidth, maxH),
+                      _buildTooltipOverlay(maxWidth, maxHeight),
                   ],
                 ),
               );
@@ -269,23 +343,70 @@ class _SleepStageChartState extends State<SleepStageChart> {
           ),
         ),
 
-        /// 底部信息
-        if (widget.footerChild.isNotEmpty)
-          Container(
-            height: widget.footerHeight,
-            alignment: Alignment.center,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: widget.footerChild,
-            ),
-          ),
+        // 底部信息区域
+        if (widget.footerChildren.isNotEmpty) _buildFooter(),
       ],
     );
   }
 
-  /// 检查当前指示器所在的睡眠阶段，并在变化时触发回调
-  void _checkCurrentStage(double parentWidth) {
+  /// ==========================================================================
+  /// 手势处理
+  /// ==========================================================================
+
+  /// 处理点击按下事件
+  void _handleTapDown(TapDownDetails details, double maxWidth) {
+    setState(() {
+      _isIndicatorVisible = true;
+      _indicatorPositionX = details.localPosition.dx.clamp(0.0, maxWidth);
+      _updateCurrentStage(maxWidth);
+    });
+  }
+
+  /// 处理拖动开始事件
+  void _handleDragStart(DragStartDetails details, double maxWidth) {
+    setState(() {
+      _isIndicatorVisible = true;
+      _indicatorPositionX = details.localPosition.dx.clamp(0.0, maxWidth);
+      _updateCurrentStage(maxWidth);
+    });
+  }
+
+  /// 处理拖动更新事件
+  void _handleDragUpdate(DragUpdateDetails details, double maxWidth) {
+    setState(() {
+      _indicatorPositionX =
+          (_indicatorPositionX + details.delta.dx).clamp(0.0, maxWidth);
+      _updateCurrentStage(maxWidth);
+    });
+
+    // 触发移动回调
+    if (widget.onIndicatorMove != null && _currentStage != null) {
+      widget.onIndicatorMove!(_currentStage!);
+    }
+  }
+
+  /// 处理拖动结束事件
+  void _handleDragEnd() {
+    setState(() {
+      _isIndicatorVisible = false;
+    });
+  }
+
+  /// 处理点击抬起事件
+  void _handleTapUp() {
+    setState(() {
+      _isIndicatorVisible = false;
+    });
+  }
+
+  /// ==========================================================================
+  /// 阶段检测
+  /// ==========================================================================
+
+  /// 更新当前指示器所在的睡眠阶段
+  ///
+  /// 根据指示器位置计算当前所在的阶段，并在阶段变化时触发回调
+  void _updateCurrentStage(double parentWidth) {
     if (!widget.hasTooltipIndicator || widget.data.isEmpty) return;
 
     final totalDurationInSeconds =
@@ -293,36 +414,57 @@ class _SleepStageChartState extends State<SleepStageChart> {
     if (totalDurationInSeconds <= 0) return;
 
     final pixelsPerSecond = parentWidth / totalDurationInSeconds;
-    SleepStageChartSegment? newStage;
+    SleepStageChartSegment? detectedStage;
 
-    for (int i = 0; i < widget.data.length; i++) {
-      final detail = widget.data[i];
+    // 遍历所有阶段，检测指示器位置是否在阶段范围内
+    for (final segment in widget.data) {
       final barLeft =
-          detail.start.difference(widget.dateFrom).inSeconds * pixelsPerSecond;
+          segment.start.difference(widget.dateFrom).inSeconds * pixelsPerSecond;
       final barWidth =
-          detail.end.difference(detail.start).inSeconds * pixelsPerSecond;
+          segment.end.difference(segment.start).inSeconds * pixelsPerSecond;
       final barRight = barLeft + barWidth;
 
-      if (_indicatorPosition >= barLeft && _indicatorPosition <= barRight) {
-        newStage = detail;
+      if (_indicatorPositionX >= barLeft && _indicatorPositionX <= barRight) {
+        detectedStage = segment;
         break;
       }
     }
 
-    /// 如果阶段发生变化
-    if (newStage != null && newStage != _currentStage) {
-      // 回调函数不为空，则触发回调
-      if (widget.onChange != null) {
-        widget.onChange!(newStage);
+    // 如果阶段发生变化，触发回调
+    if (detectedStage != null && detectedStage != _currentStage) {
+      if (widget.onStageChanged != null) {
+        widget.onStageChanged!(detectedStage);
       }
     }
 
-    /// 更新当前阶段
-    _currentStage = newStage;
+    _currentStage = detectedStage;
   }
 
-  /// 构建 Tooltip Widget
-  Widget _buildTooltip(double parentWidth, double parentHeight) {
+  /// ==========================================================================
+  /// 底部区域构建
+  /// ==========================================================================
+
+  /// 构建底部信息区域
+  Widget _buildFooter() {
+    return Container(
+      height: widget.footerHeight,
+      alignment: Alignment.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: widget.footerChildren,
+      ),
+    );
+  }
+
+  /// ==========================================================================
+  /// Tooltip 构建
+  /// ==========================================================================
+
+  /// 构建 Tooltip 覆盖层
+  ///
+  /// 包含指示器（垂直线）和 Tooltip 内容
+  Widget _buildTooltipOverlay(double parentWidth, double parentHeight) {
     final stage = _currentStage!;
 
     // 计算总时间跨度
@@ -340,44 +482,26 @@ class _SleepStageChartState extends State<SleepStageChart> {
         stage.end.difference(stage.start).inSeconds * pixelsPerSecond;
 
     // 计算 Tooltip Y 坐标，应用 tooltipOffset
-    // 正数 = 凸出顶部（向上偏移），负数 = 距离顶部（向下偏移）
-    final bgY = -widget.tooltipOffset;
+    final tooltipTopY = -widget.tooltipOffset;
 
     // 获取阶段名称
-    String stageName;
-    if (stage.titles.isNotEmpty) {
-      stageName = stage.titles.join();
-    } else if (widget.stageNameFormatter != null) {
-      stageName = widget.stageNameFormatter!(stage.type);
-    } else {
-      stageName = _getDefaultStageName(stage.type);
-    }
+    final stageName = _resolveStageName(stage);
 
     // 格式化时间段和持续时长
-    final scopeText =
+    final timeRangeText =
         '${formatTimeToHHMM(stage.start)}~${formatTimeToHHMM(stage.end)}';
-    final durationSec = stage.end.difference(stage.start).inSeconds;
-    final durationMin = (durationSec / 60).ceil();
-    final durationText = formatTimeMinute(durationMin);
+    final durationInMinutes = stage.end.difference(stage.start).inMinutes;
+    final durationText = formatTimeMinute(durationInMinutes);
 
     // 获取 Tooltip 背景颜色
-    final Color stageColor;
-    if (widget.allDayMode) {
-      stageColor = widget.allDayColor ??
-          widget.stageColors?[SleepStageTypeEnum.unknown] ??
-          Colors.grey;
-    } else {
-      stageColor = widget.stageColors?[stage.type] ??
-          defaultSleepStageColorsMap[stage.type] ??
-          Colors.grey;
-    }
+    final stageColor = _resolveStageColor(stage);
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        /// 指示器
+        // 指示器（垂直线）
         Positioned(
-          left: _indicatorPosition,
+          left: _indicatorPositionX,
           top: 0,
           bottom: 0,
           child: Container(
@@ -386,10 +510,10 @@ class _SleepStageChartState extends State<SleepStageChart> {
           ),
         ),
 
-        /// Tooltip - 使用 IntrinsicWidth 获取实际宽度进行边界调整
+        // Tooltip 定位组件
         Positioned(
           left: 0,
-          top: bgY,
+          top: tooltipTopY,
           child: _TooltipPositioner(
             barLeft: barLeft,
             barWidth: barWidth,
@@ -397,12 +521,40 @@ class _SleepStageChartState extends State<SleepStageChart> {
             stageColor: stageColor,
             durationText: durationText,
             stageName: stageName,
-            scopeText: scopeText,
+            timeRangeText: timeRangeText,
             tooltipPadding: widget.tooltipPadding,
           ),
         ),
       ],
     );
+  }
+
+  /// 解析阶段名称
+  ///
+  /// 优先级：titles 列表 > stageNameFormatter > 默认名称
+  String _resolveStageName(SleepStageChartSegment stage) {
+    if (stage.titles.isNotEmpty) {
+      return stage.titles.join();
+    } else if (widget.stageNameFormatter != null) {
+      return widget.stageNameFormatter!(stage.type);
+    } else {
+      return _getDefaultStageName(stage.type);
+    }
+  }
+
+  /// 解析阶段颜色
+  ///
+  /// 优先级：allDayColor > stageColors > defaultSleepStageColorsMap
+  Color _resolveStageColor(SleepStageChartSegment stage) {
+    if (widget.allDayMode) {
+      return widget.allDayColor ??
+          widget.stageColors?[SleepStageTypeEnum.unknown] ??
+          Colors.grey;
+    } else {
+      return widget.stageColors?[stage.type] ??
+          defaultSleepStageColorsMap[stage.type] ??
+          Colors.grey;
+    }
   }
 
   /// 获取默认的阶段名称
@@ -424,16 +576,39 @@ class _SleepStageChartState extends State<SleepStageChart> {
   }
 }
 
+/// ============================================================================
 /// Tooltip 定位组件
-/// 用于自适应计算 Tooltip 宽度和位置
+/// ============================================================================
+
+/// Tooltip 自适应定位组件
+///
+/// 根据内容宽度和图表边界自动调整 Tooltip 位置：
+/// - 默认居中于色块
+/// - 超出左边界时贴左
+/// - 超出右边界时贴右
 class _TooltipPositioner extends StatefulWidget {
+  /// 当前色块左边缘 X 坐标
   final double barLeft;
+
+  /// 当前色块宽度
   final double barWidth;
+
+  /// 父容器（图表）宽度
   final double parentWidth;
+
+  /// Tooltip 背景颜色
   final Color stageColor;
+
+  /// 持续时长文本
   final String durationText;
+
+  /// 阶段名称
   final String stageName;
-  final String scopeText;
+
+  /// 时间范围文本
+  final String timeRangeText;
+
+  /// Tooltip 内边距
   final EdgeInsetsGeometry? tooltipPadding;
 
   const _TooltipPositioner({
@@ -443,7 +618,7 @@ class _TooltipPositioner extends StatefulWidget {
     required this.stageColor,
     required this.durationText,
     required this.stageName,
-    required this.scopeText,
+    required this.timeRangeText,
     this.tooltipPadding,
   });
 
@@ -452,7 +627,10 @@ class _TooltipPositioner extends StatefulWidget {
 }
 
 class _TooltipPositionerState extends State<_TooltipPositioner> {
+  /// Tooltip 组件的 GlobalKey，用于测量实际宽度
   final GlobalKey _tooltipKey = GlobalKey();
+
+  /// Tooltip 实际宽度（像素）
   double _tooltipWidth = 0;
 
   @override
@@ -460,7 +638,7 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
     super.initState();
     // 在下一帧测量 Tooltip 宽度
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _measureTooltip();
+      _measureTooltipWidth();
     });
   }
 
@@ -470,14 +648,15 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
     // 内容变化时重新测量
     if (oldWidget.durationText != widget.durationText ||
         oldWidget.stageName != widget.stageName ||
-        oldWidget.scopeText != widget.scopeText) {
+        oldWidget.timeRangeText != widget.timeRangeText) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _measureTooltip();
+        _measureTooltipWidth();
       });
     }
   }
 
-  void _measureTooltip() {
+  /// 测量 Tooltip 实际宽度
+  void _measureTooltipWidth() {
     final renderBox =
         _tooltipKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox != null && renderBox.hasSize) {
@@ -492,26 +671,8 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
     // 计算 Tooltip 理想中心位置（基于色块中心）
     final idealCenterX = widget.barLeft + (widget.barWidth / 2);
 
-    // 计算 Tooltip 的左边界和右边界（假设居中）
-    final halfWidth = _tooltipWidth / 2;
-    final left = idealCenterX - halfWidth;
-    final right = idealCenterX + halfWidth;
-
     // 计算左边距
-    double leftPadding;
-    if (_tooltipWidth == 0) {
-      // 首次渲染，先居中
-      leftPadding = idealCenterX;
-    } else if (left < 0) {
-      // 超出左边界，贴左边
-      leftPadding = 0;
-    } else if (right > widget.parentWidth) {
-      // 超出右边界，贴右边
-      leftPadding = widget.parentWidth - _tooltipWidth;
-    } else {
-      // 在边界内，居中显示
-      leftPadding = left;
-    }
+    final leftPadding = _calculateLeftPadding(idealCenterX);
 
     return Padding(
       padding: EdgeInsets.only(left: leftPadding),
@@ -528,6 +689,7 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
+              // 持续时长
               Text(
                 widget.durationText,
                 style: const TextStyle(
@@ -537,8 +699,9 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
                 ),
               ),
               const SizedBox(height: 4),
+              // 阶段名称和时间范围
               Text(
-                '${widget.stageName} ${widget.scopeText}',
+                '${widget.stageName} ${widget.timeRangeText}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 13,
@@ -551,5 +714,36 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
         ),
       ),
     );
+  }
+
+  /// 计算 Tooltip 左边距
+  ///
+  /// 根据 Tooltip 宽度和图表边界计算合适的左边距：
+  /// - 首次渲染：居中
+  /// - 超出左边界：贴左（0）
+  /// - 超出右边界：贴右（parentWidth - tooltipWidth）
+  /// - 正常情况：居中
+  double _calculateLeftPadding(double idealCenterX) {
+    // 首次渲染，先居中
+    if (_tooltipWidth == 0) {
+      return idealCenterX;
+    }
+
+    final halfWidth = _tooltipWidth / 2;
+    final left = idealCenterX - halfWidth;
+    final right = idealCenterX + halfWidth;
+
+    // 超出左边界，贴左边
+    if (left < 0) {
+      return 0;
+    }
+
+    // 超出右边界，贴右边
+    if (right > widget.parentWidth) {
+      return widget.parentWidth - _tooltipWidth;
+    }
+
+    // 在边界内，居中显示
+    return left;
   }
 }
