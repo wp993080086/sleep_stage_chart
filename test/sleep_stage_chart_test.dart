@@ -50,7 +50,8 @@ void main() {
             data: details,
             dateFrom: DateTime(2023, 1, 1, 22, 0),
             dateTo: DateTime(2023, 1, 2, 7, 0),
-            heightUnitRatio: 0.1,
+            stageHeightRatio: 0.2,
+            stageVerticalGapRatio: 0.05,
             backgroundColor: Colors.white,
           ),
         ),
@@ -66,13 +67,5 @@ void main() {
     expect(formatTimeMinute(60), '1h');
     expect(formatTimeMinute(90), '1h30m');
     expect(formatTimeMinute(120), '2h');
-  });
-
-  test('getHeightByStage returns correct height', () {
-    expect(getHierarchyByStageType(SleepStageTypeEnum.deep), 6);
-    expect(getHierarchyByStageType(SleepStageTypeEnum.core), 4);
-    expect(getHierarchyByStageType(SleepStageTypeEnum.rem), 2);
-    expect(getHierarchyByStageType(SleepStageTypeEnum.awake), 1);
-    expect(getHierarchyByStageType(SleepStageTypeEnum.unknown), 7);
   });
 }

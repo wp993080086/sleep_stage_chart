@@ -60,7 +60,10 @@ class SleepStageChart extends StatefulWidget {
   final Color? allDayColor;
 
   /// Tooltip 垂直位置偏移（正数凸出顶部，负数距离顶部），默认 0.0
-  final double tooltipPadding;
+  final double tooltipOffset;
+
+  /// Tooltip 内边距，默认 EdgeInsets.only(left: 12, top: 6, right: 12, bottom: 6)
+  final EdgeInsetsGeometry? tooltipPadding;
 
   /// 水平轴底部高度，默认 40.0
   final double footerHeight;
@@ -112,7 +115,8 @@ class SleepStageChart extends StatefulWidget {
     this.hasTooltipIndicator = true,
     this.allDayMode = false,
     this.allDayColor = const Color(0xFF43CAC4),
-    this.tooltipPadding = 0.0,
+    this.tooltipOffset = 0.0,
+    this.tooltipPadding,
     this.footerHeight = 40.0,
     this.footerChild = const [],
     this.stageColors,
@@ -159,9 +163,7 @@ class _SleepStageChartState extends State<SleepStageChart> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               /// 计算容器高度
-              final double maxH = widget.footerChild.isEmpty
-                  ? constraints.maxHeight
-                  : constraints.maxHeight - widget.footerHeight;
+              final double maxH = constraints.maxHeight;
 
               /// 首次初始化时设置指示器位置为中间
               if (_isFirstInit) {
@@ -226,35 +228,41 @@ class _SleepStageChartState extends State<SleepStageChart> {
                       }
                     : null,
 
-                /// 图表绘制
-                child: CustomPaint(
-                  painter: SleepStageChartPainter(
-                    stageHeightRatio: widget.stageHeightRatio,
-                    stageVerticalGapRatio: widget.stageVerticalGapRatio,
-                    backgroundColor: widget.backgroundColor,
-                    data: widget.data,
-                    startTime: widget.dateFrom,
-                    endTime: widget.dateTo,
-                    borderRadius: widget.borderRadius,
-                    connectorLineWidth: widget.connectorLineWidth,
-                    horizontalLineStyle: widget.horizontalLineStyle,
-                    verticalLineStyle: widget.verticalLineStyle,
-                    verticalNodes: widget.verticalNodes,
-                    horizontalNodes: widget.horizontalNodes,
-                    stageColors: widget.stageColors,
-                    stageOrder: widget.stageOrder,
-                    dateFormatter: widget.dateFormatter,
-                    stageNameFormatter: widget.stageNameFormatter,
-                    indicatorPosition: _indicatorPosition,
-                    horizontalLineVisible: widget.horizontalLineVisible,
-                    verticalLineVisible: widget.verticalLineVisible,
-                    hasIndicator: widget.hasTooltipIndicator,
-                    indicatorVisible: _isIndicatorVisible,
-                    allDayMode: widget.allDayMode,
-                    allDayColor: widget.allDayColor,
-                    tooltipPadding: widget.tooltipPadding,
-                  ),
-                  size: Size(constraints.maxWidth, maxH),
+                /// 图表绘制（使用 Stack 叠加 Tooltip）
+                /// 使用 OverflowBox 包裹 Stack，允许 Tooltip 超出边界
+                child: Stack(
+                  clipBehavior: Clip.none, // 允许子组件超出边界
+                  children: [
+                    // 底层：图表（使用 ClipRect 裁剪，防止图表超出）
+                    ClipRect(
+                      child: CustomPaint(
+                        painter: SleepStageChartPainter(
+                          stageHeightRatio: widget.stageHeightRatio,
+                          stageVerticalGapRatio: widget.stageVerticalGapRatio,
+                          backgroundColor: widget.backgroundColor,
+                          data: widget.data,
+                          startTime: widget.dateFrom,
+                          endTime: widget.dateTo,
+                          borderRadius: widget.borderRadius,
+                          connectorLineWidth: widget.connectorLineWidth,
+                          horizontalLineStyle: widget.horizontalLineStyle,
+                          verticalLineStyle: widget.verticalLineStyle,
+                          verticalNodes: widget.verticalNodes,
+                          horizontalNodes: widget.horizontalNodes,
+                          stageColors: widget.stageColors,
+                          stageOrder: widget.stageOrder,
+                          allDayMode: widget.allDayMode,
+                          allDayColor: widget.allDayColor,
+                        ),
+                        size: Size(constraints.maxWidth, maxH),
+                      ),
+                    ),
+                    // 上层：指示器和 Tooltip（仅在启用且可见时显示）
+                    if (widget.hasTooltipIndicator &&
+                        _isIndicatorVisible &&
+                        _currentStage != null)
+                      _buildTooltip(constraints.maxWidth, maxH),
+                  ],
                 ),
               );
             },
@@ -263,10 +271,13 @@ class _SleepStageChartState extends State<SleepStageChart> {
 
         /// 底部信息
         if (widget.footerChild.isNotEmpty)
-          SizedBox(
+          Container(
+            color: Colors.red,
             height: widget.footerHeight,
+            alignment: Alignment.center,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: widget.footerChild,
             ),
           ),
@@ -309,5 +320,143 @@ class _SleepStageChartState extends State<SleepStageChart> {
 
     /// 更新当前阶段
     _currentStage = newStage;
+  }
+
+  /// 构建 Tooltip Widget
+  Widget _buildTooltip(double parentWidth, double parentHeight) {
+    final stage = _currentStage!;
+
+    // 计算总时间跨度
+    final totalDurationInSeconds =
+        widget.dateTo.difference(widget.dateFrom).inSeconds;
+    if (totalDurationInSeconds <= 0) return const SizedBox.shrink();
+
+    // 计算每秒对应的像素数
+    final pixelsPerSecond = parentWidth / totalDurationInSeconds;
+
+    // 计算当前色块的位置和宽度
+    final barLeft =
+        stage.start.difference(widget.dateFrom).inSeconds * pixelsPerSecond;
+    final barWidth =
+        stage.end.difference(stage.start).inSeconds * pixelsPerSecond;
+
+    // 计算 Tooltip X 坐标（居中于当前色块）
+    double bgX = barLeft + (barWidth / 2);
+
+    // 边界检查：确保 Tooltip 不超出图表左右边界
+    // 先假设 Tooltip 宽度为 150，后续由内容撑开
+    const assumedWidth = 150.0;
+    if (bgX < assumedWidth / 2) {
+      bgX = 0;
+    } else if (bgX + assumedWidth / 2 > parentWidth) {
+      bgX = parentWidth - assumedWidth;
+    } else {
+      bgX = bgX - assumedWidth / 2;
+    }
+
+    // 计算 Tooltip Y 坐标，应用 tooltipOffset
+    // 正数 = 凸出顶部（向上偏移），负数 = 距离顶部（向下偏移）
+    final bgY = -widget.tooltipOffset;
+
+    // 获取阶段名称
+    String stageName;
+    if (stage.titles.isNotEmpty) {
+      stageName = stage.titles.join();
+    } else if (widget.stageNameFormatter != null) {
+      stageName = widget.stageNameFormatter!(stage.type);
+    } else {
+      stageName = _getDefaultStageName(stage.type);
+    }
+
+    // 格式化时间段和持续时长
+    final scopeText =
+        '${formatTimeToHHMM(stage.start)}~${formatTimeToHHMM(stage.end)}';
+    final durationSec = stage.end.difference(stage.start).inSeconds;
+    final durationMin = (durationSec / 60).ceil();
+    final durationText = formatTimeMinute(durationMin);
+
+    // 获取 Tooltip 背景颜色
+    final Color stageColor;
+    if (widget.allDayMode) {
+      stageColor = widget.allDayColor ??
+          widget.stageColors?[SleepStageTypeEnum.unknown] ??
+          Colors.grey;
+    } else {
+      stageColor = widget.stageColors?[stage.type] ??
+          defaultSleepStageColorsMap[stage.type] ??
+          Colors.grey;
+    }
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        /// 指示器
+        Positioned(
+          left: _indicatorPosition,
+          top: 0,
+          bottom: 0,
+          child: Container(
+            width: 2,
+            color: const Color(0xFF8186B3).withAlpha(123),
+          ),
+        ),
+
+        /// Tooltip
+        Positioned(
+          left: bgX,
+          top: bgY,
+          child: Container(
+            decoration: BoxDecoration(
+              color: stageColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: widget.tooltipPadding ??
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  durationText,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$stageName $scopeText',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 获取默认的阶段名称
+  String _getDefaultStageName(SleepStageTypeEnum type) {
+    switch (type) {
+      case SleepStageTypeEnum.core:
+        return '浅睡';
+      case SleepStageTypeEnum.deep:
+        return '深睡';
+      case SleepStageTypeEnum.rem:
+        return '快速眼动';
+      case SleepStageTypeEnum.awake:
+        return '清醒';
+      case SleepStageTypeEnum.unknown:
+        return '未知';
+      case SleepStageTypeEnum.inBed:
+        return '在床上';
+    }
   }
 }

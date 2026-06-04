@@ -199,7 +199,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       // 可以在这里处理指示器移动事件
                       print('当前阶段: ${stage.type}');
                     },
-                    tooltipPadding: 30.0,
+                    tooltipOffset: 30.0,
                     // 底部文本高度
                     footerHeight: 32,
                     // 底部文本内容

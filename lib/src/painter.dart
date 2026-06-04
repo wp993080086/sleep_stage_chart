@@ -45,35 +45,17 @@ class SleepStageChartPainter extends CustomPainter {
   /// 水平线是否可见，默认 true
   final bool horizontalLineVisible;
 
-  /// 是否包含指示器，默认 true
-  final bool hasIndicator;
-
-  /// 是否显示指示器，默认 false
-  final bool indicatorVisible;
-
-  /// 指示器位置 0.0 ~ 1.0，默认 0.0
-  double indicatorPosition;
-
   /// 一整天模式，默认 false
   final bool allDayMode;
 
   /// 整天模式下的色块颜色,默认 #43CAC4
   final Color? allDayColor;
 
-  /// Tooltip 垂直位置偏移（正数凸出顶部，负数距离顶部），默认 0.0
-  final double tooltipPadding;
-
   /// 睡眠阶段颜色映射
   final Map<SleepStageTypeEnum, Color> stageColors;
 
   /// 睡眠阶段顺序（从上到下），默认 [awake, core, rem, deep]
   final List<SleepStageTypeEnum>? stageOrder;
-
-  /// 日期格式化函数
-  final String Function(DateTime)? dateFormatter;
-
-  /// 阶段名称格式化函数，用于将 SleepStageTypeEnum 转换为显示文本
-  final String Function(SleepStageTypeEnum)? stageNameFormatter;
 
   /// 构造函数
   SleepStageChartPainter({
@@ -91,18 +73,11 @@ class SleepStageChartPainter extends CustomPainter {
     this.horizontalNodes = const [],
     this.verticalLineVisible = true,
     this.horizontalLineVisible = true,
-    this.indicatorPosition = 0.0,
-    this.hasIndicator = true,
-    this.indicatorVisible = false,
     this.allDayMode = false,
     this.allDayColor = const Color(0xFF43CAC4),
-    this.tooltipPadding = 0.0,
     Map<SleepStageTypeEnum, Color>? stageColors,
     this.stageOrder = defaultStageOrder,
-    String Function(DateTime)? dateFormatter,
-    this.stageNameFormatter,
   })  : stageColors = stageColors ?? defaultSleepStageColorsMap,
-        dateFormatter = dateFormatter ?? formatTimeToHHMM,
         assert(stageHeightRatio > 0 && stageHeightRatio <= 0.25,
             'stageHeightRatio 必须在 (0, 0.25] 范围内，因为 4 × stageHeightRatio ≤ 1.0'),
         assert(stageVerticalGapRatio >= 0, 'stageVerticalGapRatio 必须 ≥ 0'),
@@ -121,7 +96,7 @@ class SleepStageChartPainter extends CustomPainter {
   double bottomPadding = 0;
 
   /// 绘制图表主入口
-  /// 绘制顺序：背景 -> 网格线 -> 色块区域 -> 指示器 -> Tooltip
+  /// 绘制顺序：背景 -> 网格线 -> 色块区域
   @override
   void paint(Canvas canvas, Size size) {
     // 初始化图表高度
@@ -151,12 +126,6 @@ class SleepStageChartPainter extends CustomPainter {
       bottomPadding = chartHeight * verticalPadding;
 
       _drawBarArea(canvas, size, gapHeight);
-    }
-
-    // 绘制指示器和 Tooltip（仅在启用且数据不为空时）
-    if (hasIndicator && indicatorVisible && data.isNotEmpty) {
-      _drawIndicator(canvas, size);
-      _drawTitle(canvas, size);
     }
   }
 
@@ -506,198 +475,11 @@ class SleepStageChartPainter extends CustomPainter {
     canvas.drawRect(lineRect, connectPaint);
   }
 
-  /// 绘制 Tooltip（显示当前指示器指向的睡眠阶段信息）
-  ///
-  /// 显示内容包括：
-  /// - 睡眠阶段名称（如 Light、Deep、REM、Awake）
-  /// - 时间段（如 22:00~23:30）
-  /// - 持续时长（如 1h 30m）
-  void _drawTitle(Canvas canvas, Size size) {
-    // 计算总时间跨度（秒）
-    final totalDurationInSeconds = endTime.difference(startTime).inSeconds;
-    if (totalDurationInSeconds <= 0) return;
-
-    // 计算每秒对应的像素数
-    final pixelsPerSecond = size.width / totalDurationInSeconds;
-
-    // 查找指示器当前指向的睡眠阶段
-    SleepStageChartSegment? currentStage;
-    double stageStartX = 0;
-    double stageWidth = 0;
-
-    for (final detail in data) {
-      final barLeft =
-          detail.start.difference(startTime).inSeconds * pixelsPerSecond;
-      final barWidth =
-          detail.end.difference(detail.start).inSeconds * pixelsPerSecond;
-      final barRight = barLeft + barWidth;
-
-      // 判断指示器是否在当前色块范围内
-      if (indicatorPosition >= barLeft && indicatorPosition <= barRight) {
-        currentStage = detail;
-        stageStartX = barLeft;
-        stageWidth = barWidth;
-        break;
-      }
-    }
-
-    // 如果没有找到对应的睡眠阶段，不显示 Tooltip
-    if (currentStage == null) {
-      return;
-    }
-
-    const textTitleStyle = TextStyle(
-      color: Colors.white,
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
-    );
-    const textSubTitleStyle = TextStyle(
-      color: Colors.white,
-      fontSize: 13,
-      fontWeight: FontWeight.w500,
-    );
-
-    // 根据睡眠阶段类型获取显示名称
-    // 优先级：自定义标题 > stageNameFormatter > 默认映射
-    String stageName;
-    if (currentStage.titles.isNotEmpty) {
-      // 如果数据中有自定义标题，使用自定义标题
-      stageName = currentStage.titles.join();
-    } else if (stageNameFormatter != null) {
-      // 如果提供了自定义格式化函数，使用它
-      stageName = stageNameFormatter!(currentStage.type);
-    } else {
-      // 使用默认映射
-      stageName = _getDefaultStageName(currentStage.type);
-    }
-
-    // 格式化时间段和持续时长
-    final String scopeText =
-        '${formatTimeToHHMM(currentStage.start)}~${formatTimeToHHMM(currentStage.end)}';
-    final durationSec =
-        currentStage.end.difference(currentStage.start).inSeconds;
-    final durationMin = (durationSec / 60).ceil();
-    final String durationText = formatTimeMinute(durationMin);
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: durationText,
-        style: textTitleStyle,
-      ),
-      textDirection: TextDirection.ltr,
-    );
-
-    final timeRangePainter = TextPainter(
-      text: TextSpan(
-        text: '$stageName $scopeText',
-        style: textSubTitleStyle,
-      ),
-      textDirection: TextDirection.ltr,
-    );
-
-    textPainter.layout();
-    timeRangePainter.layout();
-
-    // Tooltip 尺寸
-    const bgWidth = 137.0;
-    const bgHeight = 52.0;
-
-    // 计算 Tooltip X 坐标（居中于当前色块）
-    double bgX = stageStartX + (stageWidth / 2) - (bgWidth / 2);
-
-    // 边界检查：确保 Tooltip 不超出图表左右边界
-    if (bgX < 0) {
-      bgX = 0;
-    } else if (bgX + bgWidth > size.width) {
-      bgX = size.width - bgWidth;
-    }
-
-    // 计算 Tooltip Y 坐标，应用 tooltipPadding
-    // 正数 = 凸出顶部（Y为负），负数 = 距离顶部（Y为正）
-    final bgY = -tooltipPadding;
-
-    // 获取 Tooltip 背景颜色
-    final Color stageColor;
-    if (allDayMode) {
-      // 整天模式：使用 allDayColor 或 unknown 类型颜色
-      stageColor =
-          allDayColor ?? stageColors[SleepStageTypeEnum.unknown] ?? Colors.grey;
-    } else {
-      // 正常模式：使用当前阶段的颜色
-      final color = stageColors[currentStage.type];
-      if (color == null) return;
-      stageColor = color;
-    }
-
-    // 绘制 Tooltip 背景
-    final bgPaint = Paint()
-      ..color = stageColor
-      ..style = PaintingStyle.fill;
-
-    final bgRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(bgX, bgY, bgWidth, bgHeight),
-      const Radius.circular(12),
-    );
-    canvas.drawRRect(bgRect, bgPaint);
-
-    // 绘制持续时长文本
-    final x = bgX + 12;
-    final y = bgY + 6;
-    textPainter.paint(canvas, Offset(x, y));
-
-    // 绘制阶段名称和时间段文本
-    final timeX = bgX + 12;
-    final timeY = bgY + 28;
-    timeRangePainter.paint(canvas, Offset(timeX, timeY));
-  }
-
-  /// 绘制指示器（垂直线）
-  ///
-  /// 在 indicatorPosition 位置绘制一条垂直半透明线，
-  /// 用于指示当前选中的时间点
-  void _drawIndicator(Canvas canvas, Size size) {
-    // 指示器画笔（半透明紫色）
-    final indicatorPaint = Paint()
-      ..color = const Color(0xFF8186B3).withAlpha(123)
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
-
-    // 计算指示器位置
-    final centerX = indicatorPosition;
-    const startY = 0.0;
-    final endY = size.height;
-
-    // 绘制垂直线
-    canvas.drawLine(
-      Offset(centerX, startY),
-      Offset(centerX, endY),
-      indicatorPaint,
-    );
-  }
-
   /// 判断是否需要重新绘制
   ///
-  /// 当指示器位置或可见性发生变化时，需要重新绘制
+  /// 图表数据不变时不需要重绘，返回 false
   @override
   bool shouldRepaint(SleepStageChartPainter oldDelegate) {
-    return oldDelegate.indicatorPosition != indicatorPosition ||
-        oldDelegate.indicatorVisible != indicatorVisible;
-  }
-
-  /// 获取默认的阶段名称
-  String _getDefaultStageName(SleepStageTypeEnum type) {
-    switch (type) {
-      case SleepStageTypeEnum.core:
-        return '浅睡';
-      case SleepStageTypeEnum.deep:
-        return '深睡';
-      case SleepStageTypeEnum.rem:
-        return '快速眼动';
-      case SleepStageTypeEnum.awake:
-        return '清醒';
-      case SleepStageTypeEnum.unknown:
-        return '未知';
-      default:
-        return type.name;
-    }
+    return false;
   }
 }
