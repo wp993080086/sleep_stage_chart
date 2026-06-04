@@ -221,9 +221,18 @@ class SleepStageChartPainter extends CustomPainter {
 
     final dashLength = horizontalLineStyle.dashLength;
     final space = horizontalLineStyle.space;
+    final strokeWidth = paint.strokeWidth;
 
     for (final node in horizontalNodes) {
-      final y = node * size.height;
+      // 调整 Y 坐标，确保线条在画布内
+      // 顶部边界 (0.0) 向下偏移一个线宽
+      // 底部边界 (1.0) 向上偏移一个线宽
+      double y = node * size.height;
+      if (node <= 0.0) {
+        y = strokeWidth;
+      } else if (node >= 1.0) {
+        y = size.height - strokeWidth;
+      }
 
       if (dashLength > 0 && space > 0) {
         // 绘制虚线

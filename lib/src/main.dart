@@ -272,7 +272,6 @@ class _SleepStageChartState extends State<SleepStageChart> {
         /// 底部信息
         if (widget.footerChild.isNotEmpty)
           Container(
-            color: Colors.red,
             height: widget.footerHeight,
             alignment: Alignment.center,
             child: Row(
