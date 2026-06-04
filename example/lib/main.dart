@@ -46,55 +46,46 @@ class _MyHomePageState extends State<MyHomePage> {
         type: SleepStageTypeEnum.awake,
         start: sleepStart,
         end: sleepStart.add(const Duration(minutes: 15)),
-        titles: ['清醒'],
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.core,
         start: sleepStart.add(const Duration(minutes: 15)),
         end: sleepStart.add(const Duration(minutes: 75)),
-        titles: ['浅睡'],
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.deep,
         start: sleepStart.add(const Duration(minutes: 75)),
         end: sleepStart.add(const Duration(minutes: 165)),
-        titles: ['深睡'],
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.rem,
         start: sleepStart.add(const Duration(minutes: 165)),
         end: sleepStart.add(const Duration(minutes: 225)),
-        titles: ['REM'],
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.core,
         start: sleepStart.add(const Duration(minutes: 225)),
         end: sleepStart.add(const Duration(minutes: 285)),
-        titles: ['浅睡'],
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.deep,
         start: sleepStart.add(const Duration(minutes: 285)),
         end: sleepStart.add(const Duration(minutes: 375)),
-        titles: ['深睡'],
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.rem,
         start: sleepStart.add(const Duration(minutes: 375)),
         end: sleepStart.add(const Duration(minutes: 435)),
-        titles: ['REM'],
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.core,
         start: sleepStart.add(const Duration(minutes: 435)),
         end: sleepStart.add(const Duration(minutes: 480)),
-        titles: ['浅睡'],
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.awake,
         start: sleepStart.add(const Duration(minutes: 480)),
         end: sleepStart.add(const Duration(minutes: 520)),
-        titles: ['清醒'],
       ),
     ];
   }
@@ -110,25 +101,21 @@ class _MyHomePageState extends State<MyHomePage> {
         type: SleepStageTypeEnum.core,
         start: dayStart,
         end: dayStart.add(const Duration(minutes: 45)),
-        titles: ['冥想'],
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.core,
         start: dayStart.add(const Duration(hours: 2)),
         end: dayStart.add(const Duration(hours: 3, minutes: 15)),
-        titles: ['冥想'],
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.core,
         start: dayStart.add(const Duration(hours: 5)),
         end: dayStart.add(const Duration(hours: 5, minutes: 45)),
-        titles: ['冥想'],
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.core,
         start: dayStart.add(const Duration(hours: 10, minutes: 45)),
         end: dayStart.add(const Duration(hours: 12, minutes: 50)),
-        titles: ['冥想'],
       ),
     ];
   }
@@ -281,6 +268,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     backgroundColor: Colors.transparent,
                     // 色块的圆角
                     borderRadius: 8,
+                    stageNameFormatter: (_) => '冥想',
                     // 是否显示水平线
                     horizontalLineVisible: false,
                     // 垂直线节点

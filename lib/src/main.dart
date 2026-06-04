@@ -77,6 +77,9 @@ class SleepStageChart extends StatefulWidget {
   /// 日期格式化函数
   final String Function(DateTime)? dateFormatter;
 
+  /// 阶段名称格式化函数，用于将 SleepStageTypeEnum 转换为显示文本
+  final String Function(SleepStageTypeEnum)? stageNameFormatter;
+
   /// 回调函数：当指示器指向的阶段发生变化时调用
   final void Function(SleepStageChartSegment)? onChange;
 
@@ -115,6 +118,7 @@ class SleepStageChart extends StatefulWidget {
     this.stageColors,
     this.stageOrder,
     this.dateFormatter,
+    this.stageNameFormatter,
     this.onChange,
     this.onMove,
     this.onLongPress,
@@ -240,6 +244,7 @@ class _SleepStageChartState extends State<SleepStageChart> {
                     stageColors: widget.stageColors,
                     stageOrder: widget.stageOrder,
                     dateFormatter: widget.dateFormatter,
+                    stageNameFormatter: widget.stageNameFormatter,
                     indicatorPosition: _indicatorPosition,
                     horizontalLineVisible: widget.horizontalLineVisible,
                     verticalLineVisible: widget.verticalLineVisible,
