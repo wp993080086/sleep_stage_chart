@@ -339,20 +339,6 @@ class _SleepStageChartState extends State<SleepStageChart> {
     final barWidth =
         stage.end.difference(stage.start).inSeconds * pixelsPerSecond;
 
-    // 计算 Tooltip X 坐标（居中于当前色块）
-    double bgX = barLeft + (barWidth / 2);
-
-    // 边界检查：确保 Tooltip 不超出图表左右边界
-    // 先假设 Tooltip 宽度为 150，后续由内容撑开
-    const assumedWidth = 150.0;
-    if (bgX < assumedWidth / 2) {
-      bgX = 0;
-    } else if (bgX + assumedWidth / 2 > parentWidth) {
-      bgX = parentWidth - assumedWidth;
-    } else {
-      bgX = bgX - assumedWidth / 2;
-    }
-
     // 计算 Tooltip Y 坐标，应用 tooltipOffset
     // 正数 = 凸出顶部（向上偏移），负数 = 距离顶部（向下偏移）
     final bgY = -widget.tooltipOffset;
@@ -400,41 +386,19 @@ class _SleepStageChartState extends State<SleepStageChart> {
           ),
         ),
 
-        /// Tooltip
+        /// Tooltip - 使用 IntrinsicWidth 获取实际宽度进行边界调整
         Positioned(
-          left: bgX,
+          left: 0,
           top: bgY,
-          child: Container(
-            decoration: BoxDecoration(
-              color: stageColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: widget.tooltipPadding ??
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  durationText,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$stageName $scopeText',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+          child: _TooltipPositioner(
+            barLeft: barLeft,
+            barWidth: barWidth,
+            parentWidth: parentWidth,
+            stageColor: stageColor,
+            durationText: durationText,
+            stageName: stageName,
+            scopeText: scopeText,
+            tooltipPadding: widget.tooltipPadding,
           ),
         ),
       ],
@@ -457,5 +421,135 @@ class _SleepStageChartState extends State<SleepStageChart> {
       case SleepStageTypeEnum.inBed:
         return '在床上';
     }
+  }
+}
+
+/// Tooltip 定位组件
+/// 用于自适应计算 Tooltip 宽度和位置
+class _TooltipPositioner extends StatefulWidget {
+  final double barLeft;
+  final double barWidth;
+  final double parentWidth;
+  final Color stageColor;
+  final String durationText;
+  final String stageName;
+  final String scopeText;
+  final EdgeInsetsGeometry? tooltipPadding;
+
+  const _TooltipPositioner({
+    required this.barLeft,
+    required this.barWidth,
+    required this.parentWidth,
+    required this.stageColor,
+    required this.durationText,
+    required this.stageName,
+    required this.scopeText,
+    this.tooltipPadding,
+  });
+
+  @override
+  State<_TooltipPositioner> createState() => _TooltipPositionerState();
+}
+
+class _TooltipPositionerState extends State<_TooltipPositioner> {
+  final GlobalKey _tooltipKey = GlobalKey();
+  double _tooltipWidth = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // 在下一帧测量 Tooltip 宽度
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _measureTooltip();
+    });
+  }
+
+  @override
+  void didUpdateWidget(_TooltipPositioner oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 内容变化时重新测量
+    if (oldWidget.durationText != widget.durationText ||
+        oldWidget.stageName != widget.stageName ||
+        oldWidget.scopeText != widget.scopeText) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _measureTooltip();
+      });
+    }
+  }
+
+  void _measureTooltip() {
+    final renderBox =
+        _tooltipKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null && renderBox.hasSize) {
+      setState(() {
+        _tooltipWidth = renderBox.size.width;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 计算 Tooltip 理想中心位置（基于色块中心）
+    final idealCenterX = widget.barLeft + (widget.barWidth / 2);
+
+    // 计算 Tooltip 的左边界和右边界（假设居中）
+    final halfWidth = _tooltipWidth / 2;
+    final left = idealCenterX - halfWidth;
+    final right = idealCenterX + halfWidth;
+
+    // 计算左边距
+    double leftPadding;
+    if (_tooltipWidth == 0) {
+      // 首次渲染，先居中
+      leftPadding = idealCenterX;
+    } else if (left < 0) {
+      // 超出左边界，贴左边
+      leftPadding = 0;
+    } else if (right > widget.parentWidth) {
+      // 超出右边界，贴右边
+      leftPadding = widget.parentWidth - _tooltipWidth;
+    } else {
+      // 在边界内，居中显示
+      leftPadding = left;
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(left: leftPadding),
+      child: UnconstrainedBox(
+        child: Container(
+          key: _tooltipKey,
+          decoration: BoxDecoration(
+            color: widget.stageColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: widget.tooltipPadding ??
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.durationText,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${widget.stageName} ${widget.scopeText}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
