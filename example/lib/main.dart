@@ -200,8 +200,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     stageVerticalGapRatio: 0.1,
                     // 图表的背景颜色
                     backgroundColor: Colors.transparent,
-                    // 不绘制垂直线
+                    // 是否显示垂直线
                     verticalLineVisible: false,
+                    // 是否显示水平线
+                    horizontalLineVisible: true,
+                    horizontalNodes: const [0.00, 0.25, 0.50, 0.75, 1.00],
+                    verticalNodes: const [0.00, 0.25, 0.50, 0.75, 1.00],
                     // 回调事件
                     onChange: (stage) {
                       // 可以在这里处理指示器移动事件
@@ -269,6 +273,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     verticalLineVisible: true,
                     // 是否显示水平线
                     horizontalLineVisible: false,
+                    horizontalNodes: const [0.00, 0.25, 0.50, 0.75, 1.00],
+                    verticalNodes: const [0.00, 0.25, 0.50, 0.75, 1.00],
                     // 列表，包含了每一段具体的睡眠数据
                     data: meditationSample,
                     // 整个图表的开始时间，用于计算X轴
@@ -283,7 +289,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                     allDayMode: true,
                     allDayColor: Colors.blue,
-                    horizontalNodes: const [0.00, 0.25, 0.50, 0.75, 1.00],
                     // X轴底部标题高度
                     footerHeight: 32,
                     footerChild: ['00:00', '06:00', '12:00', '18:00', '00:00']

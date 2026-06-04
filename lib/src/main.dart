@@ -231,6 +231,8 @@ class _SleepStageChartState extends State<SleepStageChart> {
                     connectorLineWidth: widget.connectorLineWidth,
                     horizontalLineStyle: widget.horizontalLineStyle,
                     verticalLineStyle: widget.verticalLineStyle,
+                    verticalNodes: widget.verticalNodes,
+                    horizontalNodes: widget.horizontalNodes,
                     stageColors: widget.stageColors,
                     stageOrder: widget.stageOrder,
                     dateFormatter: widget.dateFormatter,

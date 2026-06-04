@@ -168,9 +168,9 @@ class SleepStageChartPaintStyle {
 
 /// 默认线条样式
 const defaultLineStyle = SleepStageChartLineStyle(
-  width: 5.0,
-  space: 3.0,
-  color: Color(0xffe6e6e6),
+  width: 1.0,
+  space: 0.0,
+  color: Color(0xFFCCCCCC),
 );
 
 /// 默认睡眠阶段顺序（从上到下）

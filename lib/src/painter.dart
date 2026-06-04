@@ -158,17 +158,12 @@ class SleepStageChartPainter extends CustomPainter {
         Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
   }
 
-  /// 绘制整天模式的色块（居中显示）
+  /// 绘制整天模式的色块（居中显示，按时间段绘制）
   void _drawAllDayBar(Canvas canvas, Size size) {
     final totalDurationInSeconds = endTime.difference(startTime).inSeconds;
     if (totalDurationInSeconds <= 0) return;
 
-    // 整天模式只有一个色块，使用 unknown 类型
-    const type = SleepStageTypeEnum.unknown;
-
-    // 计算色块位置（全宽度）
-    const barLeft = 0.0;
-    final barWidth = size.width;
+    final pixelsPerSecond = size.width / totalDurationInSeconds;
 
     // 计算色块高度（使用 stageHeightRatio）
     final barH = chartHeight * stageHeightRatio;
@@ -177,38 +172,53 @@ class SleepStageChartPainter extends CustomPainter {
     final barY = (chartHeight - barH) / 2;
 
     // 获取颜色（优先使用 allDayColor，否则使用 stageColors 中的 unknown 颜色）
+    const type = SleepStageTypeEnum.unknown;
     final color = allDayColor ?? stageColors[type] ?? Colors.grey;
 
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
 
-    final rect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        barLeft,
-        barY,
-        barWidth,
-        barH,
-      ),
-      Radius.circular(borderRadius),
-    );
+    // 按 data 中的时间段绘制色块
+    for (final detail in data) {
+      final barLeft =
+          detail.start.difference(startTime).inSeconds * pixelsPerSecond;
+      final barWidth =
+          detail.end.difference(detail.start).inSeconds * pixelsPerSecond;
 
-    canvas.drawRRect(rect, paint);
+      if (barWidth <= 0) continue;
+
+      final rect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          barLeft,
+          barY,
+          barWidth,
+          barH,
+        ),
+        Radius.circular(borderRadius),
+      );
+
+      canvas.drawRRect(rect, paint);
+    }
   }
 
   /// 绘制线
   void _drawLines(Canvas canvas, Size size) {
-    final dividerPaint = Paint()
-      ..color = horizontalLineStyle.color
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.butt;
-
     if (horizontalLineVisible) {
-      _drawHorizontalLines(canvas, size, dividerPaint);
+      final horizontalPaint = Paint()
+        ..color = horizontalLineStyle.color
+        ..strokeWidth = horizontalLineStyle.width
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.butt;
+      _drawHorizontalLines(canvas, size, horizontalPaint);
     }
     if (verticalLineVisible) {
-      _drawVerticalLines(canvas, size, dividerPaint);
+      final verticalPaint = Paint()
+        ..color = verticalLineStyle.color
+        ..strokeWidth = verticalLineStyle.width
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.butt;
+      _drawVerticalLines(canvas, size, verticalPaint);
     }
   }
 
