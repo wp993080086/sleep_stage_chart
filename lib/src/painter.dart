@@ -434,7 +434,7 @@ class SleepStageChartPainter extends CustomPainter {
     _drawConnectorLines(canvas, pixelsPerSecond, gapHeight);
 
     // 第二步：绘制各个睡眠阶段的色块
-    _drawStageBars(canvas, pixelsPerSecond, gapHeight);
+    _drawStageBars(canvas, pixelsPerSecond, gapHeight, size.width);
   }
 
   /// 绘制相邻色块间的渐变连接线
@@ -526,7 +526,8 @@ class SleepStageChartPainter extends CustomPainter {
   /// 绘制睡眠阶段色块
   ///
   /// 遍历 [data] 中的每个阶段，计算位置和尺寸后绘制
-  void _drawStageBars(Canvas canvas, double pixelsPerSecond, double gapHeight) {
+  void _drawStageBars(Canvas canvas, double pixelsPerSecond, double gapHeight,
+      double maxWidth) {
     for (final segment in data) {
       // 计算色块位置和尺寸
       final barLeft =
@@ -548,11 +549,15 @@ class SleepStageChartPainter extends CustomPainter {
         ..color = color
         ..style = PaintingStyle.fill;
 
+      // 计算实际绘制宽度，确保不超出画布边界
+      final drawWidth =
+          (barLeft + barWidth > maxWidth) ? maxWidth - barLeft : barWidth;
+
       final rect = RRect.fromRectAndRadius(
         Rect.fromLTWH(
           barLeft,
           barTopY,
-          barWidth + connectorLineWidth,
+          drawWidth,
           _barHeight,
         ),
         Radius.circular(borderRadius),
