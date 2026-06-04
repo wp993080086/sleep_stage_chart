@@ -230,13 +230,30 @@ class SleepStageChartPainter extends CustomPainter {
       return;
     }
 
+    final dashLength = horizontalLineStyle.dashLength;
+    final space = horizontalLineStyle.space;
+
     for (final node in horizontalNodes) {
       final y = node * size.height;
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        paint,
-      );
+
+      if (dashLength > 0 && space > 0) {
+        // 绘制虚线
+        _drawDashedLine(
+          canvas,
+          Offset(0, y),
+          Offset(size.width, y),
+          paint,
+          dashLength,
+          space,
+        );
+      } else {
+        // 绘制实线
+        canvas.drawLine(
+          Offset(0, y),
+          Offset(size.width, y),
+          paint,
+        );
+      }
     }
   }
 
@@ -246,13 +263,63 @@ class SleepStageChartPainter extends CustomPainter {
       return;
     }
 
+    final dashLength = verticalLineStyle.dashLength;
+    final space = verticalLineStyle.space;
+
     for (final node in verticalNodes) {
       final x = node * size.width;
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        paint,
-      );
+
+      if (dashLength > 0 && space > 0) {
+        // 绘制虚线
+        _drawDashedLine(
+          canvas,
+          Offset(x, 0),
+          Offset(x, size.height),
+          paint,
+          dashLength,
+          space,
+        );
+      } else {
+        // 绘制实线
+        canvas.drawLine(
+          Offset(x, 0),
+          Offset(x, size.height),
+          paint,
+        );
+      }
+    }
+  }
+
+  /// 绘制虚线
+  void _drawDashedLine(
+    Canvas canvas,
+    Offset start,
+    Offset end,
+    Paint paint,
+    double dashWidth,
+    double dashSpace,
+  ) {
+    final totalDistance = (end - start).distance;
+    final direction = (end - start) / totalDistance;
+
+    var currentDistance = 0.0;
+    var isDrawing = true;
+
+    while (currentDistance < totalDistance) {
+      final segmentLength = isDrawing ? dashWidth : dashSpace;
+
+      final remainingDistance = totalDistance - currentDistance;
+      final actualLength =
+          segmentLength > remainingDistance ? remainingDistance : segmentLength;
+
+      if (isDrawing) {
+        final segmentStart = start + direction * currentDistance;
+        final segmentEnd = start + direction * (currentDistance + actualLength);
+        canvas.drawLine(segmentStart, segmentEnd, paint);
+      }
+
+      currentDistance += actualLength;
+      isDrawing = !isDrawing;
     }
   }
 

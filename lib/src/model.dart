@@ -126,12 +126,15 @@ class SleepStageChartSegment {
   }
 }
 
-/// 睡眠阶段图表线条样式类，定义网格线的宽度和间距
+/// 睡眠阶段图表线条样式类，定义网格线的宽度、虚线长度和间距
 class SleepStageChartLineStyle {
-  /// 线条宽度
+  /// 线条宽度（粗细）
   final double width;
 
-  /// 线条间距
+  /// 虚线每段长度（实线部分）
+  final double dashLength;
+
+  /// 虚线间隔（空白部分）
   final double space;
 
   /// 线条颜色
@@ -139,6 +142,7 @@ class SleepStageChartLineStyle {
 
   const SleepStageChartLineStyle({
     required this.width,
+    required this.dashLength,
     required this.space,
     required this.color,
   });
@@ -168,9 +172,10 @@ class SleepStageChartPaintStyle {
 
 /// 默认线条样式
 const defaultLineStyle = SleepStageChartLineStyle(
-  width: 1.0,
+  width: 0.5,
+  dashLength: 0.0,
   space: 0.0,
-  color: Color(0xFFCCCCCC),
+  color: Color(0xFFE3E3E3),
 );
 
 /// 默认睡眠阶段顺序（从上到下）

@@ -164,6 +164,7 @@ class _MyHomePageState extends State<MyHomePage> {
       59,
     );
 
+    /// 主布局
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -196,22 +197,25 @@ class _MyHomePageState extends State<MyHomePage> {
                     dateFrom: sleepStartTime,
                     // 结束时间
                     dateTo: sleepEndTime,
+                    // 每个阶段的高度占比
                     stageHeightRatio: 0.15,
+                    // 每个阶段的垂直间距占比
                     stageVerticalGapRatio: 0.1,
                     // 图表的背景颜色
                     backgroundColor: Colors.transparent,
                     // 是否显示垂直线
                     verticalLineVisible: false,
-                    // 是否显示水平线
-                    horizontalLineVisible: true,
+                    // 水平线节点
                     horizontalNodes: const [0.00, 0.25, 0.50, 0.75, 1.00],
-                    verticalNodes: const [0.00, 0.25, 0.50, 0.75, 1.00],
                     // 回调事件
                     onChange: (stage) {
                       // 可以在这里处理指示器移动事件
                       print('当前阶段: ${stage.type}');
                     },
+                    tooltipPadding: 30.0,
+                    // 底部文本高度
                     footerHeight: 32,
+                    // 底部文本内容
                     footerChild: [
                       Text(
                         '${sleepStartTime.hour}:${sleepStartTime.minute}',
@@ -263,35 +267,39 @@ class _MyHomePageState extends State<MyHomePage> {
                   alignment: Alignment.center,
                   height: 300,
                   child: SleepStageChart(
-                    stageHeightRatio: 0.25,
-                    stageVerticalGapRatio: 0.0,
-                    // 图表的背景颜色，带透明度
-                    backgroundColor: Colors.transparent,
-                    // 色块的圆角
-                    borderRadius: 8,
-                    // 是否显示垂直线
-                    verticalLineVisible: true,
-                    // 是否显示水平线
-                    horizontalLineVisible: false,
-                    horizontalNodes: const [0.00, 0.25, 0.50, 0.75, 1.00],
-                    verticalNodes: const [0.00, 0.25, 0.50, 0.75, 1.00],
                     // 列表，包含了每一段具体的睡眠数据
                     data: meditationSample,
                     // 整个图表的开始时间，用于计算X轴
                     dateFrom: meditationStartTime,
                     // 整个图表的结束时间
                     dateTo: meditationEndTime,
-                    hasTooltip: true,
-                    // 是否显示指示器
-                    hasTooltipIndicator: true,
+                    // 每个阶段的高度占比
+                    stageHeightRatio: 0.25,
+                    // 每个阶段的垂直间距占比
+                    stageVerticalGapRatio: 0.0,
+                    // 图表的背景颜色，带透明度
+                    backgroundColor: Colors.transparent,
+                    // 色块的圆角
+                    borderRadius: 8,
+                    // 是否显示水平线
+                    horizontalLineVisible: false,
+                    // 垂直线节点
+                    verticalNodes: const [0.00, 0.25, 0.50, 0.75, 1.00],
+                    verticalLineStyle: const SleepStageChartLineStyle(
+                      width: 1.0,
+                      space: 3.0,
+                      dashLength: 3.0,
+                      color: Color(0xFFE3E3E3),
+                    ),
                     // 回调函数
                     onChange: (item) {
                       print('移动到：${item.type}');
                     },
+                    // 是否显示全天模式
                     allDayMode: true,
-                    allDayColor: Colors.blue,
                     // X轴底部标题高度
                     footerHeight: 32,
+                    // X轴底部标题内容
                     footerChild: ['00:00', '06:00', '12:00', '18:00', '00:00']
                         .map((v) => Text(v, style: _textStyle))
                         .toList(),

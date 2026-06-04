@@ -23,49 +23,49 @@ class SleepStageChart extends StatefulWidget {
   /// 背景颜色
   final Color backgroundColor;
 
-  /// 色块圆角
+  /// 色块圆角，默认 8.0
   final double borderRadius;
 
-  /// 色块连接线宽度
+  /// 色块连接线宽度，默认 1.0
   final double connectorLineWidth;
 
-  /// 水平线样式
+  /// 水平线样式，默认 defaultLineStyle
   final SleepStageChartLineStyle horizontalLineStyle;
 
-  /// 垂直线样式
+  /// 垂直线样式，默认 defaultLineStyle
   final SleepStageChartLineStyle verticalLineStyle;
 
-  /// 水平轴节点 0.0 ~ 1.0
+  /// 水平轴节点 0.0 ~ 1.0，默认 []
   final List<double> horizontalNodes;
 
-  /// 垂直轴节点 0.0 ~ 1.0
+  /// 垂直轴节点 0.0 ~ 1.0，默认 []
   final List<double> verticalNodes;
 
-  /// 是否显示垂直线
+  /// 是否显示垂直线，默认 true
   final bool verticalLineVisible;
 
-  /// 是否显示水平线
+  /// 是否显示水平线，默认 true
   final bool horizontalLineVisible;
 
-  /// 是否包含Tooltip
+  /// 是否包含Tooltip，默认 true
   final bool hasTooltip;
 
-  /// 是否包含Tooltip的指示器
+  /// 是否包含Tooltip的指示器，默认 true
   final bool hasTooltipIndicator;
 
-  /// 一整天模式 默认false
+  /// 一整天模式，默认 false
   final bool allDayMode;
 
-  /// 整天模式下的色块颜色
+  /// 整天模式下的色块颜色,默认 #43CAC4
   final Color? allDayColor;
 
-  /// Tooltip 垂直位置偏移（正数凸出顶部，负数距离顶部）
+  /// Tooltip 垂直位置偏移（正数凸出顶部，负数距离顶部），默认 0.0
   final double tooltipPadding;
 
-  /// 水平轴底部高度
+  /// 水平轴底部高度，默认 40.0
   final double footerHeight;
 
-  /// 水平轴子组件集合
+  /// 水平轴子组件集合，默认 []
   final List<Widget> footerChild;
 
   /// 阶段颜色映射
@@ -97,18 +97,18 @@ class SleepStageChart extends StatefulWidget {
     required this.stageHeightRatio,
     required this.stageVerticalGapRatio,
     required this.backgroundColor,
-    this.borderRadius = 4.0,
+    this.borderRadius = 8.0,
     this.connectorLineWidth = 1.0,
     this.horizontalLineStyle = defaultLineStyle,
     this.verticalLineStyle = defaultLineStyle,
     this.verticalLineVisible = true,
     this.horizontalLineVisible = true,
     this.verticalNodes = const [],
-    this.horizontalNodes = const [0.0, 0.25, 0.5, 0.75, 1.0],
+    this.horizontalNodes = const [],
     this.hasTooltip = true,
     this.hasTooltipIndicator = true,
     this.allDayMode = false,
-    this.allDayColor,
+    this.allDayColor = const Color(0xFF43CAC4),
     this.tooltipPadding = 0.0,
     this.footerHeight = 40.0,
     this.footerChild = const [],
