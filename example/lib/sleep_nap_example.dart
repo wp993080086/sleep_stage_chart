@@ -15,64 +15,40 @@ class _SleepNapChartCardState extends State<SleepNapChartCard> {
   /// 生成示例睡眠数据
   List<SleepStageChartSegment> _generateSleepData() {
     final now = DateTime.now();
-    final sleepStart = DateTime(now.year, now.month, now.day, 22, 30);
+    final base = DateTime(now.year, now.month, now.day, 22, 30);
+
+    // 辅助函数：创建时间段
+    SleepStageChartSegment segment(
+      SleepStageTypeEnum type,
+      int startMin,
+      int endMin,
+      List<String> titles,
+      String stageName,
+    ) {
+      final start = base.add(Duration(minutes: startMin));
+      final end = base.add(Duration(minutes: endMin));
+      return SleepStageChartSegment(
+        type: type,
+        start: start,
+        end: end,
+        titles: titles,
+        subtitle:
+            '$stageName · ${formatTimeToHHMM(start)} ~ ${formatTimeToHHMM(end)}',
+      );
+    }
 
     return [
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.awake,
-        start: sleepStart,
-        end: sleepStart.add(const Duration(minutes: 15)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.core,
-        start: sleepStart.add(const Duration(minutes: 15)),
-        end: sleepStart.add(const Duration(minutes: 75)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.deep,
-        start: sleepStart.add(const Duration(minutes: 75)),
-        end: sleepStart.add(const Duration(minutes: 165)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.rem,
-        start: sleepStart.add(const Duration(minutes: 165)),
-        end: sleepStart.add(const Duration(minutes: 225)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.core,
-        start: sleepStart.add(const Duration(minutes: 225)),
-        end: sleepStart.add(const Duration(minutes: 285)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.deep,
-        start: sleepStart.add(const Duration(minutes: 285)),
-        end: sleepStart.add(const Duration(minutes: 375)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.rem,
-        start: sleepStart.add(const Duration(minutes: 375)),
-        end: sleepStart.add(const Duration(minutes: 435)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.core,
-        start: sleepStart.add(const Duration(minutes: 435)),
-        end: sleepStart.add(const Duration(minutes: 480)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.awake,
-        start: sleepStart.add(const Duration(minutes: 480)),
-        end: sleepStart.add(const Duration(minutes: 520)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.unknown,
-        start: sleepStart.add(const Duration(minutes: 520)),
-        end: sleepStart.add(const Duration(minutes: 560)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.unknown,
-        start: sleepStart.add(const Duration(minutes: 720)),
-        end: sleepStart.add(const Duration(minutes: 760)),
-      ),
+      segment(SleepStageTypeEnum.awake, 0, 15, ['15', 'm'], '清醒'),
+      segment(SleepStageTypeEnum.core, 15, 75, ['1', 'h'], '浅睡'),
+      segment(SleepStageTypeEnum.deep, 75, 165, ['1', 'h', '30', 'm'], '深睡'),
+      segment(SleepStageTypeEnum.rem, 165, 225, ['1', 'h'], 'REM'),
+      segment(SleepStageTypeEnum.core, 225, 285, ['1', 'h'], '浅睡'),
+      segment(SleepStageTypeEnum.deep, 285, 375, ['1', 'h', '30', 'm'], '深睡'),
+      segment(SleepStageTypeEnum.rem, 375, 435, ['1', 'h'], 'REM'),
+      segment(SleepStageTypeEnum.core, 435, 480, ['45', 'm'], '浅睡'),
+      segment(SleepStageTypeEnum.awake, 480, 520, ['40', 'm'], '清醒'),
+      segment(SleepStageTypeEnum.unknown, 520, 560, ['40', 'm'], '零星小睡'),
+      segment(SleepStageTypeEnum.unknown, 720, 760, ['40', 'm'], '零星小睡'),
     ];
   }
 

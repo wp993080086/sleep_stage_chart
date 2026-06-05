@@ -15,29 +15,26 @@ class _MeditationChartCardState extends State<MeditationChartCard> {
   /// 生成示例冥想数据
   List<SleepStageChartSegment> _generateMeditationData() {
     final now = DateTime.now();
-    final dayStart = DateTime(now.year, now.month, now.day, 6, 0);
+    final base = DateTime(now.year, now.month, now.day, 6, 0);
+
+    // 辅助函数：创建冥想时间段
+    SleepStageChartSegment segment(int startMin, int endMin) {
+      final start = base.add(Duration(minutes: startMin));
+      final end = base.add(Duration(minutes: endMin));
+      return SleepStageChartSegment(
+        type: SleepStageTypeEnum.inBed,
+        start: start,
+        end: end,
+        titles: ['冥想'],
+        subtitle: '冥想 · ${formatTimeToHHMM(start)} ~ ${formatTimeToHHMM(end)}',
+      );
+    }
 
     return [
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.inBed,
-        start: dayStart,
-        end: dayStart.add(const Duration(minutes: 45)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.inBed,
-        start: dayStart.add(const Duration(hours: 2)),
-        end: dayStart.add(const Duration(hours: 3, minutes: 15)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.inBed,
-        start: dayStart.add(const Duration(hours: 5)),
-        end: dayStart.add(const Duration(hours: 5, minutes: 45)),
-      ),
-      SleepStageChartSegment(
-        type: SleepStageTypeEnum.inBed,
-        start: dayStart.add(const Duration(hours: 10, minutes: 45)),
-        end: dayStart.add(const Duration(hours: 12, minutes: 50)),
-      ),
+      segment(0, 45), // 06:00 - 06:45
+      segment(120, 195), // 08:00 - 09:15 (2h - 3h15m)
+      segment(300, 345), // 11:00 - 11:45 (5h - 5h45m)
+      segment(645, 770), // 16:45 - 18:50 (10h45m - 12h50m)
     ];
   }
 
@@ -138,7 +135,6 @@ class _MeditationChartCardState extends State<MeditationChartCard> {
                 stageVerticalGapRatio: 0,
                 backgroundColor: Colors.transparent,
                 borderRadius: 8,
-                stageNameFormatter: (_) => '冥想',
                 horizontalLineVisible: false,
                 verticalNodes: const [0.0, 0.25, 0.5, 0.75, 1.0],
                 verticalLineStyle: const SleepStageChartLineStyle(

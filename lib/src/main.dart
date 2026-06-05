@@ -1,3 +1,5 @@
+import 'dart:math' as _math;
+
 import 'package:flutter/material.dart';
 import 'model.dart';
 import 'painter.dart';
@@ -118,6 +120,9 @@ class SleepStageChart extends StatefulWidget {
   /// 次文字样式（阶段名称和时间范围），默认白色 13px 中等粗细
   final TextStyle? tooltipSecondaryTextStyle;
 
+  /// 标题是否是驼峰样式,默认true
+  final bool hasTitleHump;
+
   /// ==========================================================================
   /// 构造参数 - 模式
   /// ==========================================================================
@@ -141,20 +146,6 @@ class SleepStageChart extends StatefulWidget {
 
   /// 睡眠阶段显示顺序（从上到下），默认 [awake, core, rem, deep]
   final List<SleepStageTypeEnum>? stageOrder;
-
-  /// ==========================================================================
-  /// 构造参数 - 格式化
-  /// ==========================================================================
-
-  /// 日期格式化函数
-  ///
-  /// 用于格式化 Tooltip 中显示的日期时间
-  final String Function(DateTime)? dateFormatter;
-
-  /// 阶段名称格式化函数
-  ///
-  /// 用于将 [SleepStageTypeEnum] 转换为显示文本
-  final String Function(SleepStageTypeEnum)? stageNameFormatter;
 
   /// ==========================================================================
   /// 构造参数 - 底部区域
@@ -223,12 +214,11 @@ class SleepStageChart extends StatefulWidget {
     this.tooltipBorderRadius = 12.0,
     this.tooltipPrimaryTextStyle,
     this.tooltipSecondaryTextStyle,
+    this.hasTitleHump = true,
     this.footerHeight = 40.0,
     this.footerChildren = const [],
     this.stageColors,
     this.stageOrder,
-    this.dateFormatter,
-    this.stageNameFormatter,
     this.onStageChanged,
     this.onIndicatorMove,
     this.onIndicatorLongPress,
@@ -351,7 +341,8 @@ class _SleepStageChartState extends State<SleepStageChart> {
                     if (widget.hasTooltipIndicator &&
                         _isIndicatorVisible &&
                         _currentStage != null)
-                      _buildTooltipOverlay(maxWidth, maxHeight),
+                      _buildTooltipOverlay(
+                          maxWidth, maxHeight, widget.hasTitleHump),
                   ],
                 ),
               );
@@ -480,7 +471,11 @@ class _SleepStageChartState extends State<SleepStageChart> {
   /// 构建 Tooltip 覆盖层
   ///
   /// 包含指示器（垂直线）和 Tooltip 内容
-  Widget _buildTooltipOverlay(double parentWidth, double parentHeight) {
+  Widget _buildTooltipOverlay(
+    double parentWidth,
+    double parentHeight,
+    bool hasTitleHump,
+  ) {
     final stage = _currentStage!;
 
     // 计算总时间跨度
@@ -499,15 +494,6 @@ class _SleepStageChartState extends State<SleepStageChart> {
 
     // 计算 Tooltip Y 坐标，应用 tooltipOffset
     final tooltipTopY = -widget.tooltipOffset;
-
-    // 获取阶段名称
-    final stageName = _resolveStageName(stage);
-
-    // 格式化时间段和持续时长
-    final timeRangeText =
-        '${formatTimeToHHMM(stage.start)}~${formatTimeToHHMM(stage.end)}';
-    final durationInMinutes = stage.end.difference(stage.start).inMinutes;
-    final durationText = formatTimeMinute(durationInMinutes);
 
     // 获取 Tooltip 背景颜色
     final stageColor = _resolveStageColor(stage);
@@ -531,35 +517,23 @@ class _SleepStageChartState extends State<SleepStageChart> {
           left: 0,
           top: tooltipTopY,
           child: _TooltipPositioner(
+            hasTitleHump: hasTitleHump,
             barLeft: barLeft,
             barWidth: barWidth,
             parentWidth: parentWidth,
             stageColor: stageColor,
-            durationText: durationText,
-            stageName: stageName,
-            timeRangeText: timeRangeText,
+            primaryText: stage.titles,
+            secondaryText: stage.subtitle,
             tooltipPadding: widget.tooltipPadding,
             tooltipBackgroundColor: widget.tooltipBackgroundColor,
             tooltipBorderRadius: widget.tooltipBorderRadius,
-            tooltipPrimaryTextStyle: widget.tooltipPrimaryTextStyle,
+            tooltipPrimaryTextStyleBig: widget.tooltipPrimaryTextStyle,
+            tooltipPrimaryTextStyleSmall: widget.tooltipPrimaryTextStyle,
             tooltipSecondaryTextStyle: widget.tooltipSecondaryTextStyle,
           ),
         ),
       ],
     );
-  }
-
-  /// 解析阶段名称
-  ///
-  /// 优先级：titles 列表 > stageNameFormatter > 默认名称
-  String _resolveStageName(SleepStageChartSegment stage) {
-    if (stage.titles.isNotEmpty) {
-      return stage.titles.join();
-    } else if (widget.stageNameFormatter != null) {
-      return widget.stageNameFormatter!(stage.type);
-    } else {
-      return _getDefaultStageName(stage.type);
-    }
   }
 
   /// 解析阶段颜色
@@ -576,24 +550,6 @@ class _SleepStageChartState extends State<SleepStageChart> {
           Colors.grey;
     }
   }
-
-  /// 获取默认的阶段名称
-  String _getDefaultStageName(SleepStageTypeEnum type) {
-    switch (type) {
-      case SleepStageTypeEnum.core:
-        return '浅睡';
-      case SleepStageTypeEnum.deep:
-        return '深睡';
-      case SleepStageTypeEnum.rem:
-        return '快速眼动';
-      case SleepStageTypeEnum.awake:
-        return '清醒';
-      case SleepStageTypeEnum.unknown:
-        return '未知';
-      case SleepStageTypeEnum.inBed:
-        return '在床上';
-    }
-  }
 }
 
 /// ============================================================================
@@ -607,6 +563,9 @@ class _SleepStageChartState extends State<SleepStageChart> {
 /// - 超出左边界时贴左
 /// - 超出右边界时贴右
 class _TooltipPositioner extends StatefulWidget {
+  /// 标题是否是驼峰样式
+  final bool hasTitleHump;
+
   /// 当前色块左边缘 X 坐标
   final double barLeft;
 
@@ -619,14 +578,11 @@ class _TooltipPositioner extends StatefulWidget {
   /// Tooltip 背景颜色
   final Color stageColor;
 
-  /// 持续时长文本
-  final String durationText;
+  /// 主文本
+  final List<String> primaryText;
 
-  /// 阶段名称
-  final String stageName;
-
-  /// 时间范围文本
-  final String timeRangeText;
+  /// 副文本
+  final String? secondaryText;
 
   /// Tooltip 内边距
   final EdgeInsetsGeometry? tooltipPadding;
@@ -637,24 +593,28 @@ class _TooltipPositioner extends StatefulWidget {
   /// Tooltip 圆角半径
   final double tooltipBorderRadius;
 
-  /// 主文字样式（持续时长）
-  final TextStyle? tooltipPrimaryTextStyle;
+  /// 主文字样式大（持续时长）
+  final TextStyle? tooltipPrimaryTextStyleBig;
+
+  /// 主文字样式小（持续时长）
+  final TextStyle? tooltipPrimaryTextStyleSmall;
 
   /// 次文字样式（阶段名称和时间范围）
   final TextStyle? tooltipSecondaryTextStyle;
 
   const _TooltipPositioner({
+    required this.hasTitleHump,
     required this.barLeft,
     required this.barWidth,
     required this.parentWidth,
     required this.stageColor,
-    required this.durationText,
-    required this.stageName,
-    required this.timeRangeText,
+    required this.primaryText,
+    this.secondaryText,
     this.tooltipPadding,
     this.tooltipBackgroundColor,
     required this.tooltipBorderRadius,
-    this.tooltipPrimaryTextStyle,
+    this.tooltipPrimaryTextStyleBig,
+    this.tooltipPrimaryTextStyleSmall,
     this.tooltipSecondaryTextStyle,
   });
 
@@ -663,75 +623,41 @@ class _TooltipPositioner extends StatefulWidget {
 }
 
 class _TooltipPositionerState extends State<_TooltipPositioner> {
-  /// Tooltip 组件的 GlobalKey，用于测量实际宽度
-  final GlobalKey _tooltipKey = GlobalKey();
-
-  /// Tooltip 实际宽度（像素）
-  double _tooltipWidth = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    // 在下一帧测量 Tooltip 宽度
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _measureTooltipWidth();
-    });
-  }
-
-  @override
-  void didUpdateWidget(_TooltipPositioner oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // 内容变化时重新测量
-    if (oldWidget.durationText != widget.durationText ||
-        oldWidget.stageName != widget.stageName ||
-        oldWidget.timeRangeText != widget.timeRangeText) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _measureTooltipWidth();
-      });
-    }
-  }
-
-  /// 测量 Tooltip 实际宽度
-  void _measureTooltipWidth() {
-    final renderBox =
-        _tooltipKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox != null && renderBox.hasSize) {
-      setState(() {
-        _tooltipWidth = renderBox.size.width;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    /// 主文字样式（大）
+    final primaryStyleBig =
+        widget.tooltipPrimaryTextStyleBig ?? defaultPrimaryStyleBig;
+
+    /// 主文字样式（小）
+    final primaryStyleSmall =
+        widget.tooltipPrimaryTextStyleSmall ?? defaultPrimaryStyleSmall;
+
+    /// 副文字样式
+    final secondaryStyle =
+        widget.tooltipSecondaryTextStyle ?? defaultSecondaryStyle;
+
+    /// 使用 TextPainter 预计算 Tooltip 宽度
+    final tooltipWidth = _measureTooltipWidth(
+      primaryStyleBig,
+      primaryStyleSmall,
+      secondaryStyle,
+    );
+
     // 计算 Tooltip 理想中心位置（基于色块中心）
     final idealCenterX = widget.barLeft + (widget.barWidth / 2);
 
     // 计算左边距
-    final leftPadding = _calculateLeftPadding(idealCenterX);
+    final leftPadding = _calculateLeftPadding(idealCenterX, tooltipWidth);
 
     // 确定背景颜色（优先级：自定义 > 阶段颜色）
-    final backgroundColor = widget.tooltipBackgroundColor ?? widget.stageColor;
-
-    // 默认主文字样式
-    const defaultPrimaryStyle = TextStyle(
-      color: Colors.white,
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
-    );
-
-    // 默认次文字样式
-    const defaultSecondaryStyle = TextStyle(
-      color: Colors.white,
-      fontSize: 13,
-      fontWeight: FontWeight.w500,
-    );
+    final backgroundColor =
+        widget.tooltipBackgroundColor ?? defaultTooltipBackgroundColor;
 
     return Padding(
       padding: EdgeInsets.only(left: leftPadding),
       child: UnconstrainedBox(
         child: Container(
-          key: _tooltipKey,
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(widget.tooltipBorderRadius),
@@ -742,19 +668,26 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 持续时长（主文字）
-              Text(
-                widget.durationText,
-                style: widget.tooltipPrimaryTextStyle ?? defaultPrimaryStyle,
+              // 主文字
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: List.generate(widget.primaryText.length, (index) {
+                  bool isBig = true;
+                  // 奇数索引为小文字
+                  if (index % 2 == 1 && widget.hasTitleHump) {
+                    isBig = false;
+                  }
+                  return Text(
+                    widget.primaryText[index],
+                    style: isBig ? primaryStyleBig : primaryStyleSmall,
+                  );
+                }),
               ),
               const SizedBox(height: 4),
-              // 阶段名称和时间范围（次文字）
-              Text(
-                '${widget.stageName} ${widget.timeRangeText}',
-                style:
-                    widget.tooltipSecondaryTextStyle ?? defaultSecondaryStyle,
-                overflow: TextOverflow.ellipsis,
-              ),
+              // 次文字
+              if (widget.secondaryText != null)
+                Text(widget.secondaryText!, style: secondaryStyle),
             ],
           ),
         ),
@@ -762,20 +695,55 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
     );
   }
 
+  /// 使用 TextPainter 预计算 Tooltip 宽度
+  ///
+  /// 计算主文字（支持驼峰效果）和次文字的宽度，取较大值加上水平内边距
+  double _measureTooltipWidth(
+    TextStyle primaryStyleBig,
+    TextStyle primaryStyleSmall,
+    TextStyle secondaryStyle,
+  ) {
+    final horizontalPadding = widget.tooltipPadding != null
+        ? (widget.tooltipPadding as EdgeInsets).horizontal
+        : 24.0; // 默认 EdgeInsets.symmetric(horizontal: 12, vertical: 6)
+
+    // 测量主文字宽度（考虑驼峰效果：偶数索引为小文字）
+    double primaryWidth = 0;
+    for (var i = 0; i < widget.primaryText.length; i++) {
+      final isSmall = i % 2 == 0 && widget.hasTitleHump;
+      final style = isSmall ? primaryStyleSmall : primaryStyleBig;
+      final painter = TextPainter(
+        text: TextSpan(text: widget.primaryText[i], style: style),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout();
+      primaryWidth += painter.width;
+    }
+
+    // 测量次文字宽度
+    double secondaryWidth = 0;
+    if (widget.secondaryText != null) {
+      final painter = TextPainter(
+        text: TextSpan(text: widget.secondaryText!, style: secondaryStyle),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout();
+      secondaryWidth += painter.width;
+    }
+
+    // 取较大宽度加上内边距
+    final maxTextWidth = _math.max(primaryWidth, secondaryWidth);
+    return maxTextWidth + horizontalPadding;
+  }
+
   /// 计算 Tooltip 左边距
   ///
   /// 根据 Tooltip 宽度和图表边界计算合适的左边距：
-  /// - 首次渲染：居中
   /// - 超出左边界：贴左（0）
   /// - 超出右边界：贴右（parentWidth - tooltipWidth）
   /// - 正常情况：居中
-  double _calculateLeftPadding(double idealCenterX) {
-    // 首次渲染，先居中
-    if (_tooltipWidth == 0) {
-      return idealCenterX;
-    }
-
-    final halfWidth = _tooltipWidth / 2;
+  double _calculateLeftPadding(double idealCenterX, double tooltipWidth) {
+    final halfWidth = tooltipWidth / 2;
     final left = idealCenterX - halfWidth;
     final right = idealCenterX + halfWidth;
 
@@ -786,7 +754,7 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
 
     // 超出右边界，贴右边
     if (right > widget.parentWidth) {
-      return widget.parentWidth - _tooltipWidth;
+      return widget.parentWidth - tooltipWidth;
     }
 
     // 在边界内，居中显示

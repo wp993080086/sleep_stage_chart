@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
+
 /// ============================================================================
 /// 睡眠阶段类型枚举
 /// ============================================================================
@@ -127,8 +129,8 @@ class SleepStageChartSegment {
   /// 主标题列表（用于 Tooltip 显示）
   final List<String> titles;
 
-  /// 副标题列表（预留字段）
-  final List<String> subtitles;
+  /// 副标题（预留字段）
+  final String? subtitle;
 
   /// 创建睡眠阶段数据片段
   ///
@@ -142,7 +144,7 @@ class SleepStageChartSegment {
     required this.start,
     required this.end,
     this.titles = const [],
-    this.subtitles = const [],
+    this.subtitle,
   });
 
   /// 创建测试用的睡眠阶段数据片段
@@ -264,6 +266,33 @@ const List<SleepStageTypeEnum> defaultStageOrder = [
   SleepStageTypeEnum.rem,
   SleepStageTypeEnum.deep,
 ];
+
+/// Tooltip默认背景颜色
+const Color defaultTooltipBackgroundColor = Color(0xFFF5F5F5);
+
+/// Tooltip默认主文字样式大
+const TextStyle defaultPrimaryStyleBig = TextStyle(
+  color: Colors.black,
+  fontSize: 20,
+  fontWeight: FontWeight.w800,
+  height: 24 / 20,
+);
+
+/// Tooltip默认主文字样式小
+const TextStyle defaultPrimaryStyleSmall = TextStyle(
+  color: Colors.black,
+  fontSize: 16,
+  fontWeight: FontWeight.w700,
+  height: 20 / 16,
+);
+
+/// Tooltip默认副文字样式
+const TextStyle defaultSecondaryStyle = TextStyle(
+  color: Color(0xFF373737),
+  fontSize: 13,
+  fontWeight: FontWeight.w500,
+  height: 18 / 13,
+);
 
 /// ============================================================================
 /// 时间格式化工具函数
