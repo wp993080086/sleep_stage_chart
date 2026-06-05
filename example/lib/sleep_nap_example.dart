@@ -68,6 +68,11 @@ class _SleepNapChartCardState extends State<SleepNapChartCard> {
         start: sleepStart.add(const Duration(minutes: 520)),
         end: sleepStart.add(const Duration(minutes: 560)),
       ),
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.unknown,
+        start: sleepStart.add(const Duration(minutes: 580)),
+        end: sleepStart.add(const Duration(minutes: 620)),
+      ),
     ];
   }
 
@@ -160,6 +165,7 @@ class _SleepNapChartCardState extends State<SleepNapChartCard> {
                 verticalLineVisible: false,
                 horizontalNodes: const [0.0, 0.25, 0.5, 0.75, 1.0],
                 tooltipOffset: 20,
+                connectorLineWidth: 0.5,
                 footerHeight: 28,
                 footerChildren: [
                   _buildTimeLabel('22:30'),

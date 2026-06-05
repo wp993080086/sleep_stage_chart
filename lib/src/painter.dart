@@ -89,6 +89,12 @@ class SleepStageChartPainter extends CustomPainter {
   /// 默认顺序：[awake, core, rem, deep]
   final List<SleepStageTypeEnum>? stageOrder;
 
+  /// 是否启用连接线倾斜效果，默认 true
+  ///
+  /// 为 true 时连接线尾端向右倾斜一度
+  /// 为 false 时连接线为正常矩形
+  final bool forcedConnection;
+
   /// ==========================================================================
   /// 构造函数
   /// ==========================================================================
@@ -123,6 +129,7 @@ class SleepStageChartPainter extends CustomPainter {
     this.allDayColor = const Color(0xFF43CAC4),
     Map<SleepStageTypeEnum, Color>? stageColors,
     this.stageOrder = defaultStageOrder,
+    this.forcedConnection = true,
   })  : stageColors = stageColors ?? defaultSleepStageColorsMap,
         assert(
           stageHeightRatio > 0 && stageHeightRatio <= 0.25,
@@ -650,11 +657,48 @@ class SleepStageChartPainter extends CustomPainter {
         ? [awakeColorWithAlpha, gradientColorWithAlpha] // awake在上：从上到下渐变
         : [gradientColorWithAlpha, awakeColorWithAlpha]; // awake在下：从下到上渐变
 
+    // 计算倾斜偏移量（1度倾斜）
+    final lineHeight = lineBottomY - lineTopY;
+    final tiltOffset =
+        forcedConnection ? lineHeight * 0.017455 : 0.0; // tan(1°) ≈ 0.017455
+
+    // 根据 forcedConnection 和方向确定路径
+    final Path path;
+    final double rectWidth;
+
+    if (forcedConnection) {
+      // 启用倾斜：根据方向确定倾斜方向
+      // awake在上时尾端是底部，awake在下时尾端是顶部，尾端始终向右倾斜
+      path = isAwakeAbove
+          ? (Path() // awake在上：尾端是底部，底部向右倾斜
+            ..moveTo(left, lineTopY)
+            ..lineTo(left + connectorLineWidth, lineTopY)
+            ..lineTo(left + connectorLineWidth + tiltOffset, lineBottomY)
+            ..lineTo(left + tiltOffset, lineBottomY)
+            ..close())
+          : (Path() // awake在下：尾端是顶部，顶部向右倾斜
+            ..moveTo(left + tiltOffset, lineTopY)
+            ..lineTo(left + connectorLineWidth + tiltOffset, lineTopY)
+            ..lineTo(left + connectorLineWidth, lineBottomY)
+            ..lineTo(left, lineBottomY)
+            ..close());
+      rectWidth = connectorLineWidth + tiltOffset;
+    } else {
+      // 禁用倾斜：使用矩形
+      path = Path()
+        ..moveTo(left, lineTopY)
+        ..lineTo(left + connectorLineWidth, lineTopY)
+        ..lineTo(left + connectorLineWidth, lineBottomY)
+        ..lineTo(left, lineBottomY)
+        ..close();
+      rectWidth = connectorLineWidth;
+    }
+
     final lineRect = Rect.fromLTWH(
       left,
       lineTopY,
-      connectorLineWidth,
-      lineBottomY - lineTopY,
+      rectWidth,
+      lineHeight,
     );
 
     final connectPaint = Paint()
@@ -664,7 +708,7 @@ class SleepStageChartPainter extends CustomPainter {
         colors: gradientColors,
       ).createShader(lineRect);
 
-    canvas.drawRect(lineRect, connectPaint);
+    canvas.drawPath(path, connectPaint);
   }
 
   /// 绘制单个连接线
@@ -716,11 +760,48 @@ class SleepStageChartPainter extends CustomPainter {
         ? [prevColorWithAlpha, currentColorWithAlpha] // n在上：从上到下渐变
         : [currentColorWithAlpha, prevColorWithAlpha]; // n在下：从下到上渐变
 
+    // 计算倾斜偏移量（1度倾斜）
+    final lineHeight = lineBottomY - lineTopY;
+    final tiltOffset =
+        forcedConnection ? lineHeight * 0.017455 : 0.0; // tan(1°) ≈ 0.017455
+
+    // 根据 forcedConnection 和方向确定路径
+    final Path path;
+    final double rectWidth;
+
+    if (forcedConnection) {
+      // 启用倾斜：根据方向确定倾斜方向
+      // n在上时尾端是底部，n在下时尾端是顶部，尾端始终向右倾斜
+      path = isPrevAbove
+          ? (Path() // n在上：尾端是底部，底部向右倾斜
+            ..moveTo(left, lineTopY)
+            ..lineTo(left + connectorLineWidth, lineTopY)
+            ..lineTo(left + connectorLineWidth + tiltOffset, lineBottomY)
+            ..lineTo(left + tiltOffset, lineBottomY)
+            ..close())
+          : (Path() // n在下：尾端是顶部，顶部向右倾斜
+            ..moveTo(left + tiltOffset, lineTopY)
+            ..lineTo(left + connectorLineWidth + tiltOffset, lineTopY)
+            ..lineTo(left + connectorLineWidth, lineBottomY)
+            ..lineTo(left, lineBottomY)
+            ..close());
+      rectWidth = connectorLineWidth + tiltOffset;
+    } else {
+      // 禁用倾斜：使用矩形
+      path = Path()
+        ..moveTo(left, lineTopY)
+        ..lineTo(left + connectorLineWidth, lineTopY)
+        ..lineTo(left + connectorLineWidth, lineBottomY)
+        ..lineTo(left, lineBottomY)
+        ..close();
+      rectWidth = connectorLineWidth;
+    }
+
     final lineRect = Rect.fromLTWH(
       left,
       lineTopY,
-      connectorLineWidth,
-      lineBottomY - lineTopY,
+      rectWidth,
+      lineHeight,
     );
 
     final connectPaint = Paint()
@@ -730,7 +811,7 @@ class SleepStageChartPainter extends CustomPainter {
         colors: gradientColors,
       ).createShader(lineRect);
 
-    canvas.drawRect(lineRect, connectPaint);
+    canvas.drawPath(path, connectPaint);
   }
 
   /// 绘制睡眠阶段色块
