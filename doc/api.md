@@ -4,7 +4,8 @@
 
 ## 特性
 
-- 📊 **精美的睡眠图表**: 以平滑的过渡和渐变显示睡眠阶段。
+- 📊 **精美的睡眠图表**: 以清晰的色块和渐变显示睡眠阶段。
+- 😜 **支持午睡**: 支持午睡和零星小睡。
 - 🎨 **可定制**: 完全控制颜色、样式和布局。
 - 📱 **跨平台**: 可在 Android、iOS 和 Windows 上运行。
 - 🤏 **交互式**: 通过触摸和拖动来探索不同的睡眠阶段。
@@ -20,7 +21,7 @@
 
 ```yaml
 dependencies:
-  sleep_stage_chart: ^1.1.0
+  sleep_stage_chart: ^1.2.0
 ```
 
 然后运行：
@@ -44,38 +45,49 @@ class SleepChartExample extends StatelessWidget {
   Widget build(BuildContext context) {
     // 创建示例睡眠数据
     final sleepData = [
-      SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: DateTime(2025, 1, 1, 22, 30),
-        endTime: DateTime(2025, 1, 1, 23, 30),
-        info: ['浅睡'],
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.awake,
+        start: DateTime(2025, 1, 1, 22, 30),
+        end: DateTime(2025, 1, 1, 22, 45),
       ),
-      SleepStageDetails(
-        model: SleepStageEnum.deep,
-        startTime: DateTime(2025, 1, 1, 23, 30),
-        endTime: DateTime(2025, 1, 2, 1, 0),
-        info: ['深睡'],
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.core,
+        start: DateTime(2025, 1, 1, 22, 45),
+        end: DateTime(2025, 1, 1, 23, 45),
+      ),
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.deep,
+        start: DateTime(2025, 1, 1, 23, 45),
+        end: DateTime(2025, 1, 2, 1, 15),
       ),
       // 添加更多睡眠阶段...
     ];
+
+    final sleepStart = sleepData.first.start;
+    final sleepEnd = sleepData.last.end;
 
     return Container(
       height: 300,
       alignment: Alignment.center,
       child: SleepStageChart(
-        details: sleepData,
-        startTime: DateTime(2024, 1, 1, 22, 30),
-        endTime: DateTime(2024, 1, 2, 6, 30),
-        heightUnitRatio: 1 / 8,
+        data: sleepData,
+        dateFrom: sleepStart,
+        dateTo: sleepEnd,
+        stageHeightRatio: 0.15,
+        stageVerticalGapRatio: 0.1,
         backgroundColor: Colors.white,
-        onIndicatorMoved: (stage) {
-          print('Current stage: ${stage.model}');
-        },
-        xAxisBottomHeight: 32,
-        bottomChild: [
-          Text('开始'),
-          Text('结束'),
+        verticalLineVisible: false,
+        horizontalNodes: const [0.0, 0.25, 0.5, 0.75, 1.0],
+        tooltipOffset: 20,
+        footerHeight: 28,
+        connectorLineWidth: 1.0,
+        footerChildren: [
+          Text('22:30'),
+          Text('07:10'),
         ],
+        onStageChanged: (stage) {
+          print('${stage.type.title} ${stage.duration.inMinutes}分钟');
+        },
       ),
     );
   }
@@ -88,85 +100,102 @@ class SleepChartExample extends StatelessWidget {
 import 'package:flutter/material.dart';
 import 'package:sleep_stage_chart/sleep_stage_chart.dart';
 
-Container(
-  alignment: Alignment.center,
-  height: 300,
-  child: SleepStageChart(
-    heightUnitRatio: 1 / 8,
-    xAxisBottomHeight: 32,
-    backgroundColor: Colors.transparent,
-    borderRadius: 8,
-    horizontalLineCount: 4,
-    showVerticalLine: true,
-    showHorizontalLine: false,
-    details: [
-      SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: dayStart,
-        endTime: dayStart.add(const Duration(minutes: 45)),
-        info: ['冥想'],
+class MeditationChartExample extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final dayStart = DateTime(now.year, now.month, now.day, 6, 0);
+
+    final meditationData = [
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.inBed,
+        start: dayStart,
+        end: dayStart.add(const Duration(minutes: 45)),
       ),
-      SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: dayStart.add(const Duration(hours: 2)),
-        endTime: dayStart.add(const Duration(hours: 3, minutes: 15)),
-        info: ['冥想'],
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.inBed,
+        start: dayStart.add(const Duration(hours: 2)),
+        end: dayStart.add(const Duration(hours: 3, minutes: 15)),
       ),
-      // 更多......
-    ],
-    startTime: meditationStartTime,
-    endTime: meditationEndTime,
-    stageColors: const {
-      SleepStageEnum.light: Color(0xFF43CAC4),
-      SleepStageEnum.deep: Color(0xFF43CAC4),
-      SleepStageEnum.rem: Color(0xFF43CAC4),
-      SleepStageEnum.awake: Color(0xFF43CAC4),
-    },
-    onIndicatorMoved: (item) {
-      print('${item.model}');
-    },
-    allDayModel: true,
-    minuteInterval: 360,
-    bottomChild: ['00:00', '06:00', '12:00', '18:00', '00:00']
-        .map((v) => Text(v))
-        .toList(),
-  ),
-),
+    ];
+
+    return Container(
+      alignment: Alignment.center,
+      height: 300,
+      child: SleepStageChart(
+        data: meditationData,
+        dateFrom: DateTime(now.year, now.month, now.day),
+        dateTo: DateTime(now.year, now.month, now.day, 23, 59, 59),
+        stageHeightRatio: 0.25,
+        stageVerticalGapRatio: 0,
+        backgroundColor: Colors.transparent,
+        borderRadius: 8,
+        stageNameFormatter: (_) => '冥想',
+        horizontalLineVisible: false,
+        verticalNodes: const [0.0, 0.25, 0.5, 0.75, 1.0],
+        allDayMode: true,
+        allDayColor: const Color(0xFF00B894),
+        tooltipOffset: 15,
+        footerHeight: 28,
+        footerChildren: const [
+          Text('00:00'),
+          Text('06:00'),
+          Text('12:00'),
+          Text('18:00'),
+          Text('24:00'),
+        ],
+      ),
+    );
+  }
+}
 ```
 
 ## API 参考
 
 ### SleepStageChart
 
-用于显示睡眠阶段图表的主小部件。
+用于显示睡眠阶段图表的主组件。
 
 #### 属性
 
 | 属性名 | 类型 | 默认值 | 描述 |
 | --- | --- | --- | --- |
-| `details` | List<SleepStageDetails> | - | 睡眠详细信息数据（必需） |
-| `startTime` | DateTime | - | 开始时间（必需） |
-| `endTime` | DateTime | - | 结束时间（必需） |
-| `heightUnitRatio` | double | - | 高度比率单位 |
-| `xAxisBottomHeight` | double | 20 | X 轴底部标题高度 |
-| `backgroundColor` | Color | - | 背景颜色（必需） |
-| `borderRadius` | double | 8.0 | 色块边框半径 |
-| `connectorLineWidth` | double | 2.0 | 连接器线宽 |
-| `horizontalLineStyle` | SleepStageChartLineStyle | - | 水平线样式 |
-| `verticalLineStyle` | SleepStageChartLineStyle | - | 垂直线样式 |
-| `horizontalLineCount` | int | 8 | 图表被水平线分割成的段数 |
-| `dividerPaintStyle` | SleepStageChartPaintStyle | - | |
-| `stageColors` | Map<SleepStageEnum, Color>? | null | 睡眠阶段颜色映射 |
-| `dateFormatter` | String Function(DateTime)? | null | 日期格式化函数 |
-| `showVerticalLine` | bool | true | 是否显示垂直线 |
-| `showHorizontalLine` | bool | true | 是否显示水平线 |
-| `hasIndicator` | bool | true | 是否显示指示器 |
-| `onIndicatorMoved` | void Function(SleepStageDetails)? | null | 指示器移动到不同色块时的回调 |
-| `allDayModel` | bool | false | 全天模式 |
-| `minuteInterval` | int | 360 | 全天模式的分钟间隔（默认为 360 分钟） |
-| `bottomChild` | List<Widget> | const [] | 底部子小部件的集合 |
+| `data` | `List<SleepStageChartSegment>` | - | 睡眠阶段数据列表（必填） |
+| `dateFrom` | `DateTime` | - | 图表开始时间（必填） |
+| `dateTo` | `DateTime` | - | 图表结束时间（必填） |
+| `stageHeightRatio` | `double` | - | 色块高度比例，范围 [0, 0.25] |
+| `stageVerticalGapRatio` | `double` | - | 色块间距比例，范围 [0, 1.0] |
+| `backgroundColor` | `Color` | - | 背景颜色（必填） |
+| `borderRadius` | `double` | 4.0 | 色块圆角半径 |
+| `connectorLineWidth` | `double` | 1.0 | 连接线宽度 |
+| `horizontalLineStyle` | `SleepStageChartLineStyle` | `defaultLineStyle` | 水平网格线样式 |
+| `verticalLineStyle` | `SleepStageChartLineStyle` | `defaultLineStyle` | 垂直网格线样式 |
+| `horizontalNodes` | `List<double>` | `[]` | 水平线位置，范围 [0.0, 1.0] |
+| `verticalNodes` | `List<double>` | `[]` | 垂直线位置，范围 [0.0, 1.0] |
+| `verticalLineVisible` | `bool` | true | 是否显示垂直网格线 |
+| `horizontalLineVisible` | `bool` | true | 是否显示水平网格线 |
+| `hasTooltip` | `bool` | true | 是否显示 Tooltip |
+| `hasTooltipIndicator` | `bool` | true | 是否显示 Tooltip 指示器（垂直线） |
+| `tooltipOffset` | `double` | 0.0 | Tooltip 垂直偏移 |
+| `tooltipPadding` | `EdgeInsetsGeometry?` | `EdgeInsets.symmetric(horizontal: 12, vertical: 6)` | Tooltip 内边距 |
+| `tooltipBackgroundColor` | `Color?` | null | Tooltip 背景颜色（默认使用阶段颜色） |
+| `tooltipBorderRadius` | `double` | 12.0 | Tooltip 圆角半径 |
+| `tooltipPrimaryTextStyle` | `TextStyle?` | null | 主文字样式（持续时长） |
+| `tooltipSecondaryTextStyle` | `TextStyle?` | null | 次文字样式（阶段名称和时间范围） |
+| `allDayMode` | `bool` | false | 全天模式（单个居中色块） |
+| `allDayColor` | `Color?` | `Color(0xFF43CAC4)` | 全天模式下的色块颜色 |
+| `stageColors` | `Map<SleepStageTypeEnum, Color>?` | null | 自定义阶段颜色 |
+| `stageOrder` | `List<SleepStageTypeEnum>?` | `[awake, core, rem, deep]` | 阶段显示顺序 |
+| `dateFormatter` | `String Function(DateTime)?` | null | 日期格式化函数 |
+| `stageNameFormatter` | `String Function(SleepStageTypeEnum)?` | null | 阶段名称格式化函数 |
+| `footerHeight` | `double` | 40.0 | 底部区域高度 |
+| `footerChildren` | `List<Widget>` | `[]` | 底部子组件列表 |
+| `onStageChanged` | `void Function(SleepStageChartSegment)?` | null | 指示器指向不同阶段时的回调 |
+| `onIndicatorMove` | `void Function(SleepStageChartSegment)?` | null | 指示器移动时的回调 |
+| `onIndicatorLongPress` | `void Function(SleepStageChartSegment)?` | null | 长按指示器时的回调 |
+| `onStageTap` | `void Function(SleepStageChartSegment)?` | null | 点击阶段色块时的回调 |
 
-### SleepStageDetails
+### SleepStageChartSegment
 
 表示单个睡眠阶段周期。
 
@@ -174,21 +203,34 @@ Container(
 
 | 属性 | 类型 | 描述 |
 | --- | --- | --- |
-| `model` | `SleepStageEnum` | 睡眠阶段类型 |
-| `startTime` | `DateTime` | 阶段开始时间 |
-| `endTime` | `DateTime` | 阶段结束时间 |
-| `duration` | `int` | 持续时间（分钟） |
+| `type` | `SleepStageTypeEnum` | 睡眠阶段类型 |
+| `start` | `DateTime` | 阶段开始时间 |
+| `end` | `DateTime` | 阶段结束时间 |
+| `duration` | `Duration` | 持续时长（getter，由 start 和 end 计算） |
 
-### SleepStageEnum
+### SleepStageTypeEnum
 
 表示不同睡眠阶段的枚举：
 
-- `SleepStageEnum.light` - 浅睡
-- `SleepStageEnum.deep` - 深睡
-- `SleepStageEnum.rem` - 快速眼动睡眠
-- `SleepStageEnum.awake` - 清醒
-- `SleepStageEnum.notWorn` - 未佩戴设备
-- `SleepStageEnum.unknown` - 未知状态
+- `SleepStageTypeEnum.awake` - 清醒
+- `SleepStageTypeEnum.core` - 核心睡眠（浅睡）
+- `SleepStageTypeEnum.deep` - 深睡
+- `SleepStageTypeEnum.rem` - 快速眼动睡眠
+- `SleepStageTypeEnum.unknown` - 未知状态（用于午睡间隙）
+- `SleepStageTypeEnum.inBed` - 在床上（用于冥想）
+
+### SleepStageChartLineStyle
+
+定义网格线的样式。
+
+#### 属性
+
+| 属性 | 类型 | 默认值 | 描述 |
+| --- | --- | --- | --- |
+| `width` | `double` | 1.0 | 线宽 |
+| `color` | `Color` | `Color(0xFFE0E0E0)` | 线条颜色 |
+| `dashLength` | `double` | 0.0 | 虚线长度（0 表示实线） |
+| `space` | `double` | 0.0 | 虚线间隔 |
 
 ## 定制
 
@@ -198,14 +240,14 @@ Container(
 
 ```dart
 final customColors = {
-  SleepStageEnum.light: Colors.blue.shade300,
-  SleepStageEnum.deep: Colors.blue.shade700,
-  SleepStageEnum.rem: Colors.teal.shade300,
-  SleepStageEnum.awake: Colors.orange.shade300,
+  SleepStageTypeEnum.core: Colors.blue.shade300,
+  SleepStageTypeEnum.deep: Colors.blue.shade700,
+  SleepStageTypeEnum.rem: Colors.teal.shade300,
+  SleepStageTypeEnum.awake: Colors.orange.shade300,
 };
 
 SleepStageChart(
-  // ... other properties
+  // ... 其他属性
   stageColors: customColors,
 )
 ```
@@ -216,11 +258,21 @@ SleepStageChart(
 
 ```dart
 SleepStageChart(
-  // ... other properties
-  horizontalLineStyle: SleepStageChartLineStyle(width: 3.0, space: 5.0),
-  verticalLineStyle: SleepStageChartLineStyle(width: 3.0, space: 5.0),
-  showHorizontalLine: true,
-  showVerticalLine: true,
+  // ... 其他属性
+  horizontalLineStyle: SleepStageChartLineStyle(
+    width: 1,
+    space: 3,
+    dashLength: 3,
+    color: Colors.grey.shade300,
+  ),
+  verticalLineStyle: SleepStageChartLineStyle(
+    width: 1,
+    space: 3,
+    dashLength: 3,
+    color: Colors.grey.shade300,
+  ),
+  horizontalLineVisible: true,
+  verticalLineVisible: true,
 )
 ```
 
@@ -230,14 +282,13 @@ SleepStageChart(
 
 ```dart
 SleepStageChart(
-  // ... other properties
+  // ... 其他属性
   dateFormatter: (DateTime date) {
     return '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   },
-  bottomInfoTextStyle: TextStyle(
-    color: Colors.grey,
-    fontSize: 12,
-  ),
+  stageNameFormatter: (SleepStageTypeEnum type) {
+    return type.title;
+  },
 )
 ```
 

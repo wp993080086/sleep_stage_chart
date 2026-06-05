@@ -91,18 +91,20 @@ git checkout -b fix/your-bug-fix
 /// 示例用法：
 /// ```dart
 /// SleepStageChart(
-///   details: sleepData,
-///   startTime: startTime,
-///   endTime: endTime,
-///   hasIndicator: true,
+///   data: sleepData,
+///   dateFrom: startTime,
+///   dateTo: endTime,
+///   stageHeightRatio: 0.15,
+///   stageVerticalGapRatio: 0.1,
+///   backgroundColor: Colors.white,
 /// )
 /// ```
 class SleepStageChart extends StatefulWidget {
   /// 睡眠阶段数据列表
-  final List<SleepStageDetails> details;
+  final List<SleepStageChartSegment> data;
   
   /// 图表开始时间
-  final DateTime startTime;
+  final DateTime dateFrom;
   
   // ... 其他属性
 }
@@ -138,9 +140,9 @@ git commit -m "refactor: 优化图表绘制性能"
 ```dart
 // test/sleep_stage_chart_test.dart
 test('should calculate correct stage height', () {
-  expect(getHeightByStage(SleepStageEnum.deep), 6);
-  expect(getHeightByStage(SleepStageEnum.light), 4);
-  expect(getHeightByStage(SleepStageEnum.rem), 2);
+  expect(getHeightFromStage(SleepStageTypeEnum.deep), 6);
+  expect(getHeightFromStage(SleepStageTypeEnum.core), 4);
+  expect(getHeightFromStage(SleepStageTypeEnum.rem), 2);
 });
 ```
 
@@ -151,9 +153,12 @@ testWidgets('should display sleep stage chart', (WidgetTester tester) async {
   await tester.pumpWidget(
     MaterialApp(
       home: SleepStageChart(
-        details: testSleepData,
-        startTime: testStartTime,
-        endTime: testEndTime,
+        data: testSleepData,
+        dateFrom: testStartTime,
+        dateTo: testEndTime,
+        stageHeightRatio: 0.15,
+        stageVerticalGapRatio: 0.1,
+        backgroundColor: Colors.white,
       ),
     ),
   );
@@ -236,11 +241,12 @@ sleep_stage_chart/
 - 绘制睡眠阶段条形图
 - 绘制连接线和指示器
 
-#### SleepStageDetails
+#### SleepStageChartSegment
 数据模型，包含：
-- 睡眠阶段类型
-- 时间范围
-- 持续时间
+- 睡眠阶段类型 (type)
+- 开始时间 (start)
+- 结束时间 (end)
+- 持续时长 (duration, getter)
 
 ### 调试技巧
 
@@ -248,7 +254,7 @@ sleep_stage_chart/
 ```dart
 // 在组件中添加调试信息
 Widget build(BuildContext context) {
-  debugPrint('SleepStageChart build: ${details.length} stages');
+  debugPrint('SleepStageChart build: ${data.length} stages');
   return CustomPaint(/* ... */);
 }
 ```
@@ -279,9 +285,9 @@ flutter pub global run devtools
 
 #### Q: 如何添加新的睡眠阶段类型？
 A: 
-1. 在 `SleepStageEnum` 中添加新枚举值
-2. 更新 `getModeByStage` 和 `getHeightByStage` 函数
-3. 在默认颜色映射中添加对应颜色
+1. 在 `SleepStageTypeEnum` 中添加新枚举值
+2. 更新 `getModeFromStage` 和 `getHeightFromStage` 函数
+3. 在默认颜色映射 `defaultSleepStageColorsMap` 中添加对应颜色
 4. 添加相应的测试用例
 
 #### Q: 如何优化图表性能？

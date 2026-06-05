@@ -9,7 +9,8 @@ A Flutter plugin for displaying visual charts of sleep stages and sleep quality 
 
 ## Features
 
-- 📊 **Beautiful Sleep Charts**: Display sleep stages with smooth transitions and gradients.
+- 📊 **Beautiful Sleep Charts**: Display sleep stages with clear color blocks and gradients.
+- 😜 **Nap Support**: Support for naps and short sleeps.
 - 🎨 **Customizable**: Full control over colors, styles, and layout.
 - 📱 **Cross Platform**: Works on both Android and iOS and Windows.
 - 🤏 **Interactive**: Touch and drag to explore different sleep stages.
@@ -25,7 +26,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  sleep_stage_chart: ^1.1.2
+  sleep_stage_chart: ^1.2.0
 ```
 
 Then run:
@@ -51,38 +52,49 @@ class SleepChartExample extends StatelessWidget {
   Widget build(BuildContext context) {
     // Create sample sleep data
     final sleepData = [
-      SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: DateTime(2025, 1, 1, 22, 30),
-        endTime: DateTime(2025, 1, 1, 23, 30),
-        info: ['浅睡'],
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.awake,
+        start: DateTime(2025, 1, 1, 22, 30),
+        end: DateTime(2025, 1, 1, 22, 45),
       ),
-      SleepStageDetails(
-        model: SleepStageEnum.deep,
-        startTime: DateTime(2025, 1, 1, 23, 30),
-        endTime: DateTime(2025, 1, 2, 1, 0),
-        info: ['深睡'],
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.core,
+        start: DateTime(2025, 1, 1, 22, 45),
+        end: DateTime(2025, 1, 1, 23, 45),
+      ),
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.deep,
+        start: DateTime(2025, 1, 1, 23, 45),
+        end: DateTime(2025, 1, 2, 1, 15),
       ),
       // Add more sleep stages...
     ];
+
+    final sleepStart = sleepData.first.start;
+    final sleepEnd = sleepData.last.end;
 
     return Container(
       height: 300,
       alignment: Alignment.center,
       child: SleepStageChart(
-        details: sleepData,
-        startTime: DateTime(2024, 1, 1, 22, 30),
-        endTime: DateTime(2024, 1, 2, 6, 30),
-        heightUnitRatio: 1 / 8,
+        data: sleepData,
+        dateFrom: sleepStart,
+        dateTo: sleepEnd,
+        stageHeightRatio: 0.15,
+        stageVerticalGapRatio: 0.1,
         backgroundColor: Colors.white,
-        onIndicatorMoved: (stage) {
-          print('Current stage: ${stage.model}');
-        },
-        xAxisBottomHeight: 32,
-        bottomChild: [
-          Text('Start'),
-          Text('End'),
+        verticalLineVisible: false,
+        horizontalNodes: const [0.0, 0.25, 0.5, 0.75, 1.0],
+        tooltipOffset: 20,
+        footerHeight: 28,
+        connectorLineWidth: 1.0,
+        footerChildren: [
+          Text('22:30'),
+          Text('07:10'),
         ],
+        onStageChanged: (stage) {
+          print('${stage.type.title} ${stage.duration.inMinutes}min');
+        },
       ),
     );
   }
@@ -97,50 +109,54 @@ class SleepChartExample extends StatelessWidget {
 import 'package:flutter/material.dart';
 import 'package:sleep_stage_chart/sleep_stage_chart.dart';
 
-Container(
-  alignment: Alignment.center,
-  height: 300,
-  child: SleepStageChart(
-    heightUnitRatio: 1 / 8,
-    xAxisBottomHeight: 32,
-    backgroundColor: Colors.transparent,
-    borderRadius: 8,
-    horizontalLineCount: 4,
-    showVerticalLine: true,
-    showHorizontalLine: false,
-    details: [
-      SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: dayStart,
-        endTime: dayStart.add(const Duration(minutes: 45)),
-        info: ['冥想'],
+class MeditationChartExample extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final dayStart = DateTime(now.year, now.month, now.day, 6, 0);
+
+    final meditationData = [
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.inBed,
+        start: dayStart,
+        end: dayStart.add(const Duration(minutes: 45)),
       ),
-      SleepStageDetails(
-        model: SleepStageEnum.light,
-        startTime: dayStart.add(const Duration(hours: 2)),
-        endTime: dayStart.add(const Duration(hours: 3, minutes: 15)),
-        info: ['冥想'],
+      SleepStageChartSegment(
+        type: SleepStageTypeEnum.inBed,
+        start: dayStart.add(const Duration(hours: 2)),
+        end: dayStart.add(const Duration(hours: 3, minutes: 15)),
       ),
-      // More......
-    ],
-    startTime: meditationStartTime,
-    endTime: meditationEndTime,
-    stageColors: const {
-      SleepStageEnum.light: Color(0xFF43CAC4),
-      SleepStageEnum.deep: Color(0xFF43CAC4),
-      SleepStageEnum.rem: Color(0xFF43CAC4),
-      SleepStageEnum.awake: Color(0xFF43CAC4),
-    },
-    onIndicatorMoved: (item) {
-      print('${item.model}');
-    },
-    allDayModel: true,
-    minuteInterval: 360,
-    bottomChild: ['00:00', '06:00', '12:00', '18:00', '00:00']
-        .map((v) => Text(v))
-        .toList(),
-  ),
-),
+    ];
+
+    return Container(
+      alignment: Alignment.center,
+      height: 300,
+      child: SleepStageChart(
+        data: meditationData,
+        dateFrom: DateTime(now.year, now.month, now.day),
+        dateTo: DateTime(now.year, now.month, now.day, 23, 59, 59),
+        stageHeightRatio: 0.25,
+        stageVerticalGapRatio: 0,
+        backgroundColor: Colors.transparent,
+        borderRadius: 8,
+        stageNameFormatter: (_) => 'Meditation',
+        horizontalLineVisible: false,
+        verticalNodes: const [0.0, 0.25, 0.5, 0.75, 1.0],
+        allDayMode: true,
+        allDayColor: const Color(0xFF00B894),
+        tooltipOffset: 15,
+        footerHeight: 28,
+        footerChildren: const [
+          Text('00:00'),
+          Text('06:00'),
+          Text('12:00'),
+          Text('18:00'),
+          Text('24:00'),
+        ],
+      ),
+    );
+  }
+}
 ```
 
 ## API Reference
@@ -151,53 +167,79 @@ The main widget for displaying sleep stage charts.
 
 #### Properties
 
-| Property Name       | Type                              | Default Value | Description                                                      |
-| ------------------- | --------------------------------- | ------------- | ---------------------------------------------------------------- |
-| `details`             | List&lt;SleepStageDetails&gt;     | -             | Sleep detail data (required)                                     |
-| `startTime`           | DateTime                          | -             | Start time (required)                                            |
-| `endTime`             | DateTime                          | -             | End time (required)                                              |
-| `heightUnitRatio`     | double                            | -             | Height ratio unit                                                |
-| `xAxisBottomHeight`   | double                            | 20            | X-axis bottom title height                                       |
-| `backgroundColor`     | Color                             | -             | Background color (required)                                      |
-| `borderRadius`        | double                            | 8.0           | Color block border radius                                        |
-| `connectorLineWidth`  | double                            | 2.0           | Connector line width                                             |
-| `horizontalLineStyle` | SleepStageChartLineStyle          | -             | Horizontal line style                                            |
-| `verticalLineStyle`   | SleepStageChartLineStyle          | -             | Vertical line style                                              |
-| `horizontalLineCount` | int                               | 8             | Number of segments the chart is divided into by horizontal lines |
-| `dividerPaintStyle`   | SleepStageChartPaintStyle         | -             |
-| `stageColors`         | Map&lt;SleepStageEnum, Color&gt;? | null          | Sleep stage color mapping                                        |
-| `dateFormatter`       | String Function(DateTime)?        | null          | Date formatting function                                         |
-| `showVerticalLine`    | bool                              | true          | Whether to show vertical lines                                   |
-| `showHorizontalLine`  | bool                              | true          | Whether to show horizontal lines                                 |
-| `hasIndicator`        | bool                              | true          | Whether to show indicator                                        |
-| `onIndicatorMoved`    | void Function(SleepStageDetails)? | null          | Callback when indicator moves to different color blocks          |
-| `allDayModel`         | bool                              | false         | All-day mode                                                     |
-| `minuteInterval`      | int                               | 360           | Minute interval for all-day mode (default 360 minutes)           |
-| `bottomChild`         | List&lt;Widget&gt;                | const []      | Collection of bottom child widgets                               |
+| Property Name | Type | Default Value | Description |
+| --- | --- | --- | --- |
+| `data` | `List<SleepStageChartSegment>` | - | Sleep stage data list (required) |
+| `dateFrom` | `DateTime` | - | Chart start time (required) |
+| `dateTo` | `DateTime` | - | Chart end time (required) |
+| `stageHeightRatio` | `double` | - | Height ratio of each stage block, range [0, 0.25] |
+| `stageVerticalGapRatio` | `double` | - | Vertical gap ratio between stages, range [0, 1.0] |
+| `backgroundColor` | `Color` | - | Background color (required) |
+| `borderRadius` | `double` | 4.0 | Border radius of stage blocks |
+| `connectorLineWidth` | `double` | 1.0 | Width of connector lines between adjacent blocks |
+| `horizontalLineStyle` | `SleepStageChartLineStyle` | `defaultLineStyle` | Horizontal grid line style |
+| `verticalLineStyle` | `SleepStageChartLineStyle` | `defaultLineStyle` | Vertical grid line style |
+| `horizontalNodes` | `List<double>` | `[]` | Horizontal line positions, range [0.0, 1.0] |
+| `verticalNodes` | `List<double>` | `[]` | Vertical line positions, range [0.0, 1.0] |
+| `verticalLineVisible` | `bool` | true | Whether to show vertical grid lines |
+| `horizontalLineVisible` | `bool` | true | Whether to show horizontal grid lines |
+| `hasTooltip` | `bool` | true | Whether to show tooltip |
+| `hasTooltipIndicator` | `bool` | true | Whether to show tooltip indicator (vertical line) |
+| `tooltipOffset` | `double` | 0.0 | Tooltip vertical offset |
+| `tooltipPadding` | `EdgeInsetsGeometry?` | `EdgeInsets.symmetric(horizontal: 12, vertical: 6)` | Tooltip padding |
+| `tooltipBackgroundColor` | `Color?` | null | Tooltip background color (defaults to stage color) |
+| `tooltipBorderRadius` | `double` | 12.0 | Tooltip border radius |
+| `tooltipPrimaryTextStyle` | `TextStyle?` | null | Primary text style (duration) |
+| `tooltipSecondaryTextStyle` | `TextStyle?` | null | Secondary text style (stage name and time) |
+| `allDayMode` | `bool` | false | All-day mode (single centered block) |
+| `allDayColor` | `Color?` | `Color(0xFF43CAC4)` | Color for all-day mode |
+| `stageColors` | `Map<SleepStageTypeEnum, Color>?` | null | Custom stage colors |
+| `stageOrder` | `List<SleepStageTypeEnum>?` | `[awake, core, rem, deep]` | Stage display order |
+| `dateFormatter` | `String Function(DateTime)?` | null | Date formatter function |
+| `stageNameFormatter` | `String Function(SleepStageTypeEnum)?` | null | Stage name formatter function |
+| `footerHeight` | `double` | 40.0 | Footer area height |
+| `footerChildren` | `List<Widget>` | `[]` | Footer child widgets |
+| `onStageChanged` | `void Function(SleepStageChartSegment)?` | null | Callback when indicator points to different stage |
+| `onIndicatorMove` | `void Function(SleepStageChartSegment)?` | null | Callback when indicator moves |
+| `onIndicatorLongPress` | `void Function(SleepStageChartSegment)?` | null | Callback when indicator is long pressed |
+| `onStageTap` | `void Function(SleepStageChartSegment)?` | null | Callback when stage block is tapped |
 
-### SleepStageDetails
+### SleepStageChartSegment
 
 Represents a single sleep stage period.
 
 #### Properties
 
-| Property    | Type             | Description         |
-| ----------- | ---------------- | ------------------- |
-| `model`     | `SleepStageEnum` | Sleep stage type    |
-| `startTime` | `DateTime`       | Stage start time    |
-| `endTime`   | `DateTime`       | Stage end time      |
-| `duration`  | `int`            | Duration in minutes |
+| Property | Type | Description |
+| --- | --- | --- |
+| `type` | `SleepStageTypeEnum` | Sleep stage type |
+| `start` | `DateTime` | Stage start time |
+| `end` | `DateTime` | Stage end time |
+| `duration` | `Duration` | Duration (getter, calculated from start and end) |
 
-### SleepStageEnum
+### SleepStageTypeEnum
 
 Enum representing different sleep stages:
 
-- `SleepStageEnum.light` - Light sleep
-- `SleepStageEnum.deep` - Deep sleep
-- `SleepStageEnum.rem` - REM sleep
-- `SleepStageEnum.awake` - Awake
-- `SleepStageEnum.notWorn` - Device not worn
-- `SleepStageEnum.unknown` - Unknown state
+- `SleepStageTypeEnum.awake` - Awake
+- `SleepStageTypeEnum.core` - Core sleep (light sleep)
+- `SleepStageTypeEnum.deep` - Deep sleep
+- `SleepStageTypeEnum.rem` - REM sleep
+- `SleepStageTypeEnum.unknown` - Unknown state (for nap gaps)
+- `SleepStageTypeEnum.inBed` - In bed (for meditation)
+
+### SleepStageChartLineStyle
+
+Defines the style of grid lines.
+
+#### Properties
+
+| Property | Type | Default | Description |
+| --- | --- | --- | --- |
+| `width` | `double` | 1.0 | Line width |
+| `color` | `Color` | `Color(0xFFE0E0E0)` | Line color |
+| `dashLength` | `double` | 0.0 | Dash length (0 for solid line) |
+| `space` | `double` | 0.0 | Space between dashes |
 
 ## Customization
 
@@ -207,10 +249,10 @@ You can customize the colors for different sleep stages:
 
 ```dart
 final customColors = {
-  SleepStageEnum.light: Colors.blue.shade300,
-  SleepStageEnum.deep: Colors.blue.shade700,
-  SleepStageEnum.rem: Colors.teal.shade300,
-  SleepStageEnum.awake: Colors.orange.shade300,
+  SleepStageTypeEnum.core: Colors.blue.shade300,
+  SleepStageTypeEnum.deep: Colors.blue.shade700,
+  SleepStageTypeEnum.rem: Colors.teal.shade300,
+  SleepStageTypeEnum.awake: Colors.orange.shade300,
 };
 
 SleepStageChart(
@@ -226,10 +268,20 @@ Customize the appearance of grid lines:
 ```dart
 SleepStageChart(
   // ... other properties
-  horizontalLineStyle: SleepStageChartLineStyle(width: 3.0, space: 5.0),
-  verticalLineStyle: SleepStageChartLineStyle(width: 3.0, space: 5.0),
-  showHorizontalLine: true,
-  showVerticalLine: true,
+  horizontalLineStyle: SleepStageChartLineStyle(
+    width: 1,
+    space: 3,
+    dashLength: 3,
+    color: Colors.grey.shade300,
+  ),
+  verticalLineStyle: SleepStageChartLineStyle(
+    width: 1,
+    space: 3,
+    dashLength: 3,
+    color: Colors.grey.shade300,
+  ),
+  horizontalLineVisible: true,
+  verticalLineVisible: true,
 )
 ```
 
@@ -243,10 +295,9 @@ SleepStageChart(
   dateFormatter: (DateTime date) {
     return '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   },
-  bottomInfoTextStyle: TextStyle(
-    color: Colors.grey,
-    fontSize: 12,
-  ),
+  stageNameFormatter: (SleepStageTypeEnum type) {
+    return type.title; // or custom mapping
+  },
 )
 ```
 

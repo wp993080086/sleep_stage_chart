@@ -1,3 +1,11 @@
+# 1.2.0
+
+* Optimize connection line rendering logic.
+* Optimize tooltip display effect, decoupling the tooltip from the chart line.
+* Add nap display effect.
+* Fix color block gap issues.
+* Optimize example code.
+
 # 1.1.2
 
 * Update the `pubspec.yaml` description.
