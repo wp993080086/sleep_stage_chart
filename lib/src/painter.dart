@@ -447,16 +447,21 @@ class SleepStageChartPainter extends CustomPainter {
     _drawStageBars(canvas, pixelsPerSecond, gapHeight, size.width);
   }
 
-  /// 检测指定索引的 segment 是否需要绘制为渐变 unknown 色块
+  /// 检测指定索引的 segment 是否是 unknown 类型
   ///
-  /// 条件：
-  /// - 当前 segment 是 unknown
-  /// - 前一个 segment 是 awake，或后一个 segment 是 awake
+  /// 所有 unknown 都需要绘制为渐变色块
   bool _isUnknownNeedingGradient(int index) {
     if (index < 0 || index >= data.length) return false;
+    return data[index].type == SleepStageTypeEnum.unknown;
+  }
 
-    final segment = data[index];
-    if (segment.type != SleepStageTypeEnum.unknown) return false;
+  /// 检测指定索引的 unknown segment 是否与 awake 相邻
+  ///
+  /// 返回 true 表示与 awake 相邻，渐变色块覆盖3层（core, rem, deep）
+  /// 返回 false 表示不与 awake 相邻，渐变色块覆盖4层（awake, core, rem, deep）
+  bool _isUnknownAdjacentToAwake(int index) {
+    if (index < 0 || index >= data.length) return false;
+    if (data[index].type != SleepStageTypeEnum.unknown) return false;
 
     // 检查前一个 segment
     if (index > 0 && data[index - 1].type == SleepStageTypeEnum.awake) {
@@ -475,8 +480,12 @@ class SleepStageChartPainter extends CustomPainter {
   /// 绘制渐变 unknown 色块
   ///
   /// 当 unknown 与 awake 相邻时，在底层绘制一个跨越 core+rem+deep 的渐变色块
-  void _drawUnknownGradientBars(Canvas canvas, double pixelsPerSecond,
-      double gapHeight, double maxWidth) {
+  void _drawUnknownGradientBars(
+    Canvas canvas,
+    double pixelsPerSecond,
+    double gapHeight,
+    double maxWidth,
+  ) {
     for (int i = 0; i < data.length; i++) {
       // 只处理需要渐变的 unknown
       if (!_isUnknownNeedingGradient(i)) continue;
@@ -496,28 +505,56 @@ class SleepStageChartPainter extends CustomPainter {
       final drawWidth =
           (barLeft + barWidth > maxWidth) ? maxWidth - barLeft : barWidth;
 
-      // 获取 rem, core, deep 的颜色
+      // 判断是否与 awake 相邻
+      final isAdjacentToAwake = _isUnknownAdjacentToAwake(i);
+
+      // 获取颜色
+      final awakeColor = stageColors[SleepStageTypeEnum.awake];
       final remColor = stageColors[SleepStageTypeEnum.rem];
       final coreColor = stageColors[SleepStageTypeEnum.core];
       final deepColor = stageColors[SleepStageTypeEnum.deep];
 
       if (remColor == null || coreColor == null || deepColor == null) continue;
 
-      // 计算渐变色块的位置（从 rem 到 deep）
-      // 根据默认顺序：awake, core, rem, deep
-      // 渐变色块需要覆盖 core, rem, deep 三个位置
       final order = stageOrder ?? defaultStageOrder;
+      final awakeIndex = order.indexOf(SleepStageTypeEnum.awake);
       final coreIndex = order.indexOf(SleepStageTypeEnum.core);
       final remIndex = order.indexOf(SleepStageTypeEnum.rem);
       final deepIndex = order.indexOf(SleepStageTypeEnum.deep);
 
-      // 渐变色块顶部 Y（取 core 和 rem 中较小的索引位置）
-      final gradientTopIndex = coreIndex < remIndex ? coreIndex : remIndex;
-      final gradientTopY =
-          _bottomPadding + gradientTopIndex * (_barHeight + gapHeight);
+      // 计算渐变色块的位置和高度
+      final double gradientTopY;
+      final double gradientHeight;
+      final List<Color> gradientColors;
+      final List<double> gradientStops;
 
-      // 渐变色块高度（3 个色块 + 2 个间距）
-      final gradientHeight = _barHeight * 3 + gapHeight * 2;
+      if (isAdjacentToAwake) {
+        // 与 awake 相邻：覆盖3层（core, rem, deep）
+        final gradientTopIndex = coreIndex < remIndex ? coreIndex : remIndex;
+        gradientTopY =
+            _bottomPadding + gradientTopIndex * (_barHeight + gapHeight);
+        gradientHeight = _barHeight * 3 + gapHeight * 2;
+        gradientColors = [
+          remColor.withAlpha(77),
+          coreColor.withAlpha(77),
+          deepColor.withAlpha(77),
+        ];
+        gradientStops = const [0.0, 0.5, 1.0];
+      } else {
+        // 不与 awake 相邻：覆盖4层（awake, core, rem, deep）
+        final minIndex = [awakeIndex, coreIndex, remIndex, deepIndex]
+            .reduce((a, b) => a < b ? a : b);
+        gradientTopY = _bottomPadding + minIndex * (_barHeight + gapHeight);
+        gradientHeight = _barHeight * 4 + gapHeight * 3;
+        if (awakeColor == null) continue;
+        gradientColors = [
+          awakeColor.withAlpha(77),
+          remColor.withAlpha(77),
+          coreColor.withAlpha(77),
+          deepColor.withAlpha(77),
+        ];
+        gradientStops = const [0.0, 0.33, 0.66, 1.0];
+      }
 
       // 创建圆角矩形（与其他色块保持一致的圆角）
       final rect =
@@ -531,13 +568,8 @@ class SleepStageChartPainter extends CustomPainter {
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            remColor.withAlpha(77),
-            coreColor.withAlpha(77),
-            deepColor.withAlpha(77),
-          ],
-          // 设置颜色停止点，确保渐变均匀分布
-          stops: const [0.0, 0.5, 1.0],
+          colors: gradientColors,
+          stops: gradientStops,
         ).createShader(rect)
         ..style = PaintingStyle.fill;
 
@@ -572,16 +604,17 @@ class SleepStageChartPainter extends CustomPainter {
               (prevSegment.type == SleepStageTypeEnum.unknown &&
                   currentSegment.type == SleepStageTypeEnum.awake);
 
-      if (isAwakeUnknownPair && _isUnknownNeedingGradient(i)) {
+      if (isAwakeUnknownPair) {
         // awake 与渐变色块之间的连接线
         _drawAwakeToGradientConnector(
           canvas: canvas,
           awakeIndex: prevSegment.type == SleepStageTypeEnum.awake ? i - 1 : i,
+          unknownIndex:
+              prevSegment.type == SleepStageTypeEnum.unknown ? i - 1 : i,
           left: connectorLeft,
           gapHeight: gapHeight,
         );
-      } else if (!_isUnknownNeedingGradient(i - 1) &&
-          !_isUnknownNeedingGradient(i)) {
+      } else {
         // 普通连接线
         _drawSingleConnectorLine(
           canvas: canvas,
@@ -600,25 +633,39 @@ class SleepStageChartPainter extends CustomPainter {
   void _drawAwakeToGradientConnector({
     required Canvas canvas,
     required int awakeIndex,
+    required int unknownIndex,
     required double left,
     required double gapHeight,
   }) {
     // 计算 awake 色块的 Y 坐标
     final awakeBarTopY = _calculateBarTopY(SleepStageTypeEnum.awake, gapHeight);
 
+    // 判断 unknown 是否与 awake 相邻（决定覆盖3层还是4层）
+    final isAdjacentToAwake = _isUnknownAdjacentToAwake(unknownIndex);
+
     // 计算渐变色块的顶部和底部 Y 坐标
     final order = stageOrder ?? defaultStageOrder;
+    final awakeIndexInOrder = order.indexOf(SleepStageTypeEnum.awake);
     final coreIndex = order.indexOf(SleepStageTypeEnum.core);
     final remIndex = order.indexOf(SleepStageTypeEnum.rem);
     final deepIndex = order.indexOf(SleepStageTypeEnum.deep);
 
-    // 渐变色块顶部（取 core 和 rem 中较小的索引位置）
-    final gradientTopIndex = coreIndex < remIndex ? coreIndex : remIndex;
-    final gradientTopY =
-        _bottomPadding + gradientTopIndex * (_barHeight + gapHeight);
+    final double gradientTopY;
+    final double gradientBottomY;
 
-    // 渐变色块底部（取 deep 的位置）
-    final gradientBottomY = gradientTopY + _barHeight * 3 + gapHeight * 2;
+    if (isAdjacentToAwake) {
+      // 与 awake 相邻：覆盖3层（core, rem, deep）
+      final gradientTopIndex = coreIndex < remIndex ? coreIndex : remIndex;
+      gradientTopY =
+          _bottomPadding + gradientTopIndex * (_barHeight + gapHeight);
+      gradientBottomY = gradientTopY + _barHeight * 3 + gapHeight * 2;
+    } else {
+      // 不与 awake 相邻：覆盖4层（awake, core, rem, deep）
+      final minIndex = [awakeIndexInOrder, coreIndex, remIndex, deepIndex]
+          .reduce((a, b) => a < b ? a : b);
+      gradientTopY = _bottomPadding + minIndex * (_barHeight + gapHeight);
+      gradientBottomY = gradientTopY + _barHeight * 4 + gapHeight * 3;
+    }
 
     // 计算圆角偏移量（连接线需要延伸到圆角内部）
     final cornerOffset = borderRadius * 0.7;
@@ -644,18 +691,28 @@ class SleepStageChartPainter extends CustomPainter {
 
     // 获取渐变色块对应位置的颜色
     final remColor = stageColors[SleepStageTypeEnum.rem];
+    final coreColor = stageColors[SleepStageTypeEnum.core];
     final deepColor = stageColors[SleepStageTypeEnum.deep];
-    if (remColor == null || deepColor == null) return;
+    if (remColor == null || coreColor == null || deepColor == null) return;
 
     final awakeColorWithAlpha = awakeColor.withAlpha(123);
-    final gradientColorWithAlpha = isAwakeAbove
-        ? remColor.withAlpha(77) // awake在上：连接渐变色块顶部(rem色)
-        : deepColor.withAlpha(77); // awake在下：连接渐变色块底部(deep色)
+
+    // 根据是否与 awake 相邻确定渐变色块边缘颜色
+    final Color gradientEdgeColor;
+    if (isAdjacentToAwake) {
+      // 与 awake 相邻：渐变色块边缘是 rem（上）或 deep（下）
+      gradientEdgeColor =
+          isAwakeAbove ? remColor.withAlpha(77) : deepColor.withAlpha(77);
+    } else {
+      // 不与 awake 相邻：渐变色块边缘是 awake（上）或 deep（下）
+      gradientEdgeColor =
+          isAwakeAbove ? awakeColor.withAlpha(77) : deepColor.withAlpha(77);
+    }
 
     // 根据相对位置确定渐变方向
     final gradientColors = isAwakeAbove
-        ? [awakeColorWithAlpha, gradientColorWithAlpha] // awake在上：从上到下渐变
-        : [gradientColorWithAlpha, awakeColorWithAlpha]; // awake在下：从下到上渐变
+        ? [awakeColorWithAlpha, gradientEdgeColor] // awake在上：从上到下渐变
+        : [gradientEdgeColor, awakeColorWithAlpha]; // awake在下：从下到上渐变
 
     // 计算倾斜偏移量（1度倾斜）
     final lineHeight = lineBottomY - lineTopY;
