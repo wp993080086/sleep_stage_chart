@@ -166,9 +166,6 @@ class SleepStageChart extends StatefulWidget {
   /// 底部区域子组件列表，默认 []
   final List<Widget> footerChildren;
 
-  /// 是否强制连接相邻阶段，默认 true
-  final bool? forcedConnection;
-
   /// ==========================================================================
   /// 构造参数 - 回调函数
   /// ==========================================================================
@@ -228,7 +225,6 @@ class SleepStageChart extends StatefulWidget {
     this.tooltipSecondaryTextStyle,
     this.footerHeight = 40.0,
     this.footerChildren = const [],
-    this.forcedConnection = true,
     this.stageColors,
     this.stageOrder,
     this.dateFormatter,
@@ -346,7 +342,6 @@ class _SleepStageChartState extends State<SleepStageChart> {
                           stageOrder: widget.stageOrder,
                           allDayMode: widget.allDayMode,
                           allDayColor: widget.allDayColor,
-                          forcedConnection: widget.forcedConnection ?? true,
                         ),
                         size: Size(maxWidth, maxHeight),
                       ),
@@ -719,14 +714,14 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
     final backgroundColor = widget.tooltipBackgroundColor ?? widget.stageColor;
 
     // 默认主文字样式
-    final defaultPrimaryStyle = const TextStyle(
+    const defaultPrimaryStyle = TextStyle(
       color: Colors.white,
       fontSize: 16,
       fontWeight: FontWeight.w600,
     );
 
     // 默认次文字样式
-    final defaultSecondaryStyle = const TextStyle(
+    const defaultSecondaryStyle = TextStyle(
       color: Colors.white,
       fontSize: 13,
       fontWeight: FontWeight.w500,

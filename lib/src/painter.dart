@@ -89,12 +89,6 @@ class SleepStageChartPainter extends CustomPainter {
   /// 默认顺序：[awake, core, rem, deep]
   final List<SleepStageTypeEnum>? stageOrder;
 
-  /// 是否启用连接线倾斜效果，默认 true
-  ///
-  /// 为 true 时连接线尾端向右倾斜一度
-  /// 为 false 时连接线为正常矩形
-  final bool forcedConnection;
-
   /// ==========================================================================
   /// 构造函数
   /// ==========================================================================
@@ -129,7 +123,6 @@ class SleepStageChartPainter extends CustomPainter {
     this.allDayColor = const Color(0xFF43CAC4),
     Map<SleepStageTypeEnum, Color>? stageColors,
     this.stageOrder = defaultStageOrder,
-    this.forcedConnection = true,
   })  : stageColors = stageColors ?? defaultSleepStageColorsMap,
         assert(
           stageHeightRatio > 0 && stageHeightRatio <= 0.25,
@@ -501,9 +494,12 @@ class SleepStageChartPainter extends CustomPainter {
       // 跳过无效宽度
       if (barWidth <= 0) continue;
 
+      // 宽度增加 connectorLineWidth 以与连接线区域重叠，消除相邻色块间的可见缝隙
+      final extendedBarWidth = barWidth + connectorLineWidth;
       // 计算实际绘制宽度，确保不超出画布边界
-      final drawWidth =
-          (barLeft + barWidth > maxWidth) ? maxWidth - barLeft : barWidth;
+      final drawWidth = (barLeft + extendedBarWidth > maxWidth)
+          ? maxWidth - barLeft
+          : extendedBarWidth;
 
       // 判断是否与 awake 相邻
       final isAdjacentToAwake = _isUnknownAdjacentToAwake(i);
@@ -592,10 +588,9 @@ class SleepStageChartPainter extends CustomPainter {
       // 如果间隔大于1分钟，则算断开，不绘制连接线
       if (gapDuration.inMinutes > 1) continue;
 
-      // 计算连接线的水平位置（位于n色块的右下点）
+      // 计算连接线的水平位置（从边界开始，与色块延伸区域重叠）
       final connectorLeft =
-          prevSegment.end.difference(startTime).inSeconds * pixelsPerSecond -
-              connectorLineWidth;
+          prevSegment.end.difference(startTime).inSeconds * pixelsPerSecond;
 
       // 判断是否是 awake 与 unknown 相邻的情况
       final isAwakeUnknownPair =
@@ -714,42 +709,16 @@ class SleepStageChartPainter extends CustomPainter {
         ? [awakeColorWithAlpha, gradientEdgeColor] // awake在上：从上到下渐变
         : [gradientEdgeColor, awakeColorWithAlpha]; // awake在下：从下到上渐变
 
-    // 计算倾斜偏移量（1度倾斜）
     final lineHeight = lineBottomY - lineTopY;
-    final tiltOffset =
-        forcedConnection ? lineHeight * 0.017455 : 0.0; // tan(1°) ≈ 0.017455
 
-    // 根据 forcedConnection 和方向确定路径
-    final Path path;
-    final double rectWidth;
-
-    if (forcedConnection) {
-      // 启用倾斜：根据方向确定倾斜方向
-      // awake在上时尾端是底部，awake在下时尾端是顶部，尾端始终向右倾斜
-      path = isAwakeAbove
-          ? (Path() // awake在上：尾端是底部，底部向右倾斜
-            ..moveTo(left, lineTopY)
-            ..lineTo(left + connectorLineWidth, lineTopY)
-            ..lineTo(left + connectorLineWidth + tiltOffset, lineBottomY)
-            ..lineTo(left + tiltOffset, lineBottomY)
-            ..close())
-          : (Path() // awake在下：尾端是顶部，顶部向右倾斜
-            ..moveTo(left + tiltOffset, lineTopY)
-            ..lineTo(left + connectorLineWidth + tiltOffset, lineTopY)
-            ..lineTo(left + connectorLineWidth, lineBottomY)
-            ..lineTo(left, lineBottomY)
-            ..close());
-      rectWidth = connectorLineWidth + tiltOffset;
-    } else {
-      // 禁用倾斜：使用矩形
-      path = Path()
-        ..moveTo(left, lineTopY)
-        ..lineTo(left + connectorLineWidth, lineTopY)
-        ..lineTo(left + connectorLineWidth, lineBottomY)
-        ..lineTo(left, lineBottomY)
-        ..close();
-      rectWidth = connectorLineWidth;
-    }
+    // 绘制矩形连接线
+    final path = Path()
+      ..moveTo(left, lineTopY)
+      ..lineTo(left + connectorLineWidth, lineTopY)
+      ..lineTo(left + connectorLineWidth, lineBottomY)
+      ..lineTo(left, lineBottomY)
+      ..close();
+    final rectWidth = connectorLineWidth;
 
     final lineRect = Rect.fromLTWH(
       left,
@@ -817,42 +786,16 @@ class SleepStageChartPainter extends CustomPainter {
         ? [prevColorWithAlpha, currentColorWithAlpha] // n在上：从上到下渐变
         : [currentColorWithAlpha, prevColorWithAlpha]; // n在下：从下到上渐变
 
-    // 计算倾斜偏移量（1度倾斜）
     final lineHeight = lineBottomY - lineTopY;
-    final tiltOffset =
-        forcedConnection ? lineHeight * 0.017455 : 0.0; // tan(1°) ≈ 0.017455
 
-    // 根据 forcedConnection 和方向确定路径
-    final Path path;
-    final double rectWidth;
-
-    if (forcedConnection) {
-      // 启用倾斜：根据方向确定倾斜方向
-      // n在上时尾端是底部，n在下时尾端是顶部，尾端始终向右倾斜
-      path = isPrevAbove
-          ? (Path() // n在上：尾端是底部，底部向右倾斜
-            ..moveTo(left, lineTopY)
-            ..lineTo(left + connectorLineWidth, lineTopY)
-            ..lineTo(left + connectorLineWidth + tiltOffset, lineBottomY)
-            ..lineTo(left + tiltOffset, lineBottomY)
-            ..close())
-          : (Path() // n在下：尾端是顶部，顶部向右倾斜
-            ..moveTo(left + tiltOffset, lineTopY)
-            ..lineTo(left + connectorLineWidth + tiltOffset, lineTopY)
-            ..lineTo(left + connectorLineWidth, lineBottomY)
-            ..lineTo(left, lineBottomY)
-            ..close());
-      rectWidth = connectorLineWidth + tiltOffset;
-    } else {
-      // 禁用倾斜：使用矩形
-      path = Path()
-        ..moveTo(left, lineTopY)
-        ..lineTo(left + connectorLineWidth, lineTopY)
-        ..lineTo(left + connectorLineWidth, lineBottomY)
-        ..lineTo(left, lineBottomY)
-        ..close();
-      rectWidth = connectorLineWidth;
-    }
+    // 绘制矩形连接线
+    final path = Path()
+      ..moveTo(left, lineTopY)
+      ..lineTo(left + connectorLineWidth, lineTopY)
+      ..lineTo(left + connectorLineWidth, lineBottomY)
+      ..lineTo(left, lineBottomY)
+      ..close();
+    final rectWidth = connectorLineWidth;
 
     final lineRect = Rect.fromLTWH(
       left,
@@ -903,9 +846,12 @@ class SleepStageChartPainter extends CustomPainter {
         ..color = color
         ..style = PaintingStyle.fill;
 
+      // 宽度增加 connectorLineWidth 以与连接线区域重叠，消除相邻色块间的可见缝隙
+      final extendedBarWidth = barWidth + connectorLineWidth;
       // 计算实际绘制宽度，确保不超出画布边界
-      final drawWidth =
-          (barLeft + barWidth > maxWidth) ? maxWidth - barLeft : barWidth;
+      final drawWidth = (barLeft + extendedBarWidth > maxWidth)
+          ? maxWidth - barLeft
+          : extendedBarWidth;
 
       final rect = RRect.fromRectAndRadius(
         Rect.fromLTWH(

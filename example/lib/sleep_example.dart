@@ -156,10 +156,10 @@ class _SleepChartCardState extends State<SleepChartCard> {
                 horizontalNodes: const [0.0, 0.25, 0.5, 0.75, 1.0],
                 tooltipOffset: 20,
                 footerHeight: 28,
-                connectorLineWidth: 0.5,
+                connectorLineWidth: 1.0,
                 footerChildren: [
                   _buildTimeLabel('22:30'),
-                  _buildTimeLabel('06:10'),
+                  _buildTimeLabel('07:10'),
                 ],
                 onStageChanged: (stage) {
                   print('${stage.type.title} ${stage.duration.inMinutes}分钟');
