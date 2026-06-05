@@ -41,6 +41,8 @@ flutter pub get
 
 ![Sleep Stage Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/sleep-tooltip.png)
 
+![Sleep Nap Stage Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/sleep-nap-tooltip.png)
+
 ```dart
 import 'package:flutter/material.dart';
 import 'package:sleep_stage_chart/sleep_stage_chart.dart';
@@ -174,42 +176,42 @@ class MeditationChartExample extends StatelessWidget {
 
 #### 属性说明
 
-| 属性名 | 类型 | 默认值 | 说明 |
-| ---- | ---- | ---- | ---- |
-| `data` | `List<SleepStageChartSegment>` | - | 睡眠阶段数据列表（必填） |
-| `dateFrom` | `DateTime` | - | 图表开始时间（必填） |
-| `dateTo` | `DateTime` | - | 图表结束时间（必填） |
-| `stageHeightRatio` | `double` | - | 色块高度比例，范围 [0, 0.25] |
-| `stageVerticalGapRatio` | `double` | - | 色块间距比例，范围 [0, 1.0] |
-| `backgroundColor` | `Color` | - | 背景颜色（必填） |
-| `borderRadius` | `double` | 4.0 | 色块圆角半径 |
-| `connectorLineWidth` | `double` | 1.0 | 连接线宽度 |
-| `horizontalLineStyle` | `SleepStageChartLineStyle` | `defaultLineStyle` | 水平网格线样式 |
-| `verticalLineStyle` | `SleepStageChartLineStyle` | `defaultLineStyle` | 垂直网格线样式 |
-| `horizontalNodes` | `List<double>` | `[]` | 水平线位置，范围 [0.0, 1.0] |
-| `verticalNodes` | `List<double>` | `[]` | 垂直线位置，范围 [0.0, 1.0] |
-| `verticalLineVisible` | `bool` | true | 是否显示垂直网格线 |
-| `horizontalLineVisible` | `bool` | true | 是否显示水平网格线 |
-| `hasTooltip` | `bool` | true | 是否显示 Tooltip |
-| `hasTooltipIndicator` | `bool` | true | 是否显示 Tooltip 指示器（垂直线） |
-| `tooltipOffset` | `double` | 0.0 | Tooltip 垂直偏移 |
-| `tooltipPadding` | `EdgeInsetsGeometry?` | `EdgeInsets.symmetric(horizontal: 12, vertical: 6)` | Tooltip 内边距 |
-| `tooltipBackgroundColor` | `Color?` | null | Tooltip 背景颜色（默认使用阶段颜色） |
-| `tooltipBorderRadius` | `double` | 12.0 | Tooltip 圆角半径 |
-| `tooltipPrimaryTextStyleBig` | `TextStyle?` | null | 主文字大字号样式（持续时长大字号部分） |
-| `tooltipPrimaryTextStyleSmall` | `TextStyle?` | null | 主文字小字号样式（持续时长小字号部分） |
-| `tooltipSecondaryTextStyle` | `TextStyle?` | null | 次文字样式（阶段名称和时间范围） |
-| `hasTitleHump` | `bool` | true | 标题是否使用驼峰样式（大小文字交替） |
-| `allDayMode` | `bool` | false | 全天模式（单个居中色块） |
-| `allDayColor` | `Color?` | `Color(0xFF43CAC4)` | 全天模式下的色块颜色 |
-| `stageColors` | `Map<SleepStageTypeEnum, Color>?` | null | 自定义阶段颜色 |
-| `stageOrder` | `List<SleepStageTypeEnum>?` | `[awake, core, rem, deep]` | 阶段显示顺序 |
-| `footerHeight` | `double` | 40.0 | 底部区域高度 |
-| `footerChildren` | `List<Widget>` | `[]` | 底部子组件列表 |
-| `onStageChanged` | `void Function(SleepStageChartSegment)?` | null | 指示器指向不同阶段时的回调 |
-| `onIndicatorMove` | `void Function(SleepStageChartSegment)?` | null | 指示器移动时的回调 |
-| `onIndicatorLongPress` | `void Function(SleepStageChartSegment)?` | null | 长按指示器时的回调 |
-| `onStageTap` | `void Function(SleepStageChartSegment)?` | null | 点击阶段色块时的回调 |
+| 属性名                         | 类型                                     | 默认值                                              | 说明                                   |
+| ------------------------------ | ---------------------------------------- | --------------------------------------------------- | -------------------------------------- |
+| `data`                         | `List<SleepStageChartSegment>`           | -                                                   | 睡眠阶段数据列表（必填）               |
+| `dateFrom`                     | `DateTime`                               | -                                                   | 图表开始时间（必填）                   |
+| `dateTo`                       | `DateTime`                               | -                                                   | 图表结束时间（必填）                   |
+| `stageHeightRatio`             | `double`                                 | -                                                   | 色块高度比例，范围 [0, 0.25]           |
+| `stageVerticalGapRatio`        | `double`                                 | -                                                   | 色块间距比例，范围 [0, 1.0]            |
+| `backgroundColor`              | `Color`                                  | -                                                   | 背景颜色（必填）                       |
+| `borderRadius`                 | `double`                                 | 4.0                                                 | 色块圆角半径                           |
+| `connectorLineWidth`           | `double`                                 | 1.0                                                 | 连接线宽度                             |
+| `horizontalLineStyle`          | `SleepStageChartLineStyle`               | `defaultLineStyle`                                  | 水平网格线样式                         |
+| `verticalLineStyle`            | `SleepStageChartLineStyle`               | `defaultLineStyle`                                  | 垂直网格线样式                         |
+| `horizontalNodes`              | `List<double>`                           | `[]`                                                | 水平线位置，范围 [0.0, 1.0]            |
+| `verticalNodes`                | `List<double>`                           | `[]`                                                | 垂直线位置，范围 [0.0, 1.0]            |
+| `verticalLineVisible`          | `bool`                                   | true                                                | 是否显示垂直网格线                     |
+| `horizontalLineVisible`        | `bool`                                   | true                                                | 是否显示水平网格线                     |
+| `hasTooltip`                   | `bool`                                   | true                                                | 是否显示 Tooltip                       |
+| `hasTooltipIndicator`          | `bool`                                   | true                                                | 是否显示 Tooltip 指示器（垂直线）      |
+| `tooltipOffset`                | `double`                                 | 0.0                                                 | Tooltip 垂直偏移                       |
+| `tooltipPadding`               | `EdgeInsetsGeometry?`                    | `EdgeInsets.symmetric(horizontal: 12, vertical: 6)` | Tooltip 内边距                         |
+| `tooltipBackgroundColor`       | `Color?`                                 | null                                                | Tooltip 背景颜色（默认使用阶段颜色）   |
+| `tooltipBorderRadius`          | `double`                                 | 12.0                                                | Tooltip 圆角半径                       |
+| `tooltipPrimaryTextStyleBig`   | `TextStyle?`                             | null                                                | 主文字大字号样式（持续时长大字号部分） |
+| `tooltipPrimaryTextStyleSmall` | `TextStyle?`                             | null                                                | 主文字小字号样式（持续时长小字号部分） |
+| `tooltipSecondaryTextStyle`    | `TextStyle?`                             | null                                                | 次文字样式（阶段名称和时间范围）       |
+| `hasTitleHump`                 | `bool`                                   | true                                                | 标题是否使用驼峰样式（大小文字交替）   |
+| `allDayMode`                   | `bool`                                   | false                                               | 全天模式（单个居中色块）               |
+| `allDayColor`                  | `Color?`                                 | `Color(0xFF43CAC4)`                                 | 全天模式下的色块颜色                   |
+| `stageColors`                  | `Map<SleepStageTypeEnum, Color>?`        | null                                                | 自定义阶段颜色                         |
+| `stageOrder`                   | `List<SleepStageTypeEnum>?`              | `[awake, core, rem, deep]`                          | 阶段显示顺序                           |
+| `footerHeight`                 | `double`                                 | 40.0                                                | 底部区域高度                           |
+| `footerChildren`               | `List<Widget>`                           | `[]`                                                | 底部子组件列表                         |
+| `onStageChanged`               | `void Function(SleepStageChartSegment)?` | null                                                | 指示器指向不同阶段时的回调             |
+| `onIndicatorMove`              | `void Function(SleepStageChartSegment)?` | null                                                | 指示器移动时的回调                     |
+| `onIndicatorLongPress`         | `void Function(SleepStageChartSegment)?` | null                                                | 长按指示器时的回调                     |
+| `onStageTap`                   | `void Function(SleepStageChartSegment)?` | null                                                | 点击阶段色块时的回调                   |
 
 ### SleepStageChartSegment
 
@@ -217,14 +219,14 @@ class MeditationChartExample extends StatelessWidget {
 
 #### 属性说明
 
-| 属性名 | 类型 | 说明 |
-| ---- | ---- | ---- |
-| `type` | `SleepStageTypeEnum` | 睡眠阶段类型 |
-| `start` | `DateTime` | 阶段开始时间 |
-| `end` | `DateTime` | 阶段结束时间 |
-| `titles` | `List<String>` | 主标题列表（用于 Tooltip 显示） |
-| `subtitle` | `String?` | 副标题（用于 Tooltip 显示） |
-| `duration` | `Duration` | 持续时长（getter，由 start 和 end 计算） |
+| 属性名     | 类型                 | 说明                                     |
+| ---------- | -------------------- | ---------------------------------------- |
+| `type`     | `SleepStageTypeEnum` | 睡眠阶段类型                             |
+| `start`    | `DateTime`           | 阶段开始时间                             |
+| `end`      | `DateTime`           | 阶段结束时间                             |
+| `titles`   | `List<String>`       | 主标题列表（用于 Tooltip 显示）          |
+| `subtitle` | `String?`            | 副标题（用于 Tooltip 显示）              |
+| `duration` | `Duration`           | 持续时长（getter，由 start 和 end 计算） |
 
 ### SleepStageTypeEnum
 
@@ -243,12 +245,12 @@ class MeditationChartExample extends StatelessWidget {
 
 #### 属性说明
 
-| 属性名 | 类型 | 默认值 | 说明 |
-| ---- | ---- | ---- | ---- |
-| `width` | `double` | 1.0 | 线宽 |
-| `color` | `Color` | `Color(0xFFE0E0E0)` | 线条颜色 |
-| `dashLength` | `double` | 0.0 | 虚线长度（0 表示实线） |
-| `space` | `double` | 0.0 | 虚线间隔 |
+| 属性名       | 类型     | 默认值              | 说明                   |
+| ------------ | -------- | ------------------- | ---------------------- |
+| `width`      | `double` | 1.0                 | 线宽                   |
+| `color`      | `Color`  | `Color(0xFFE0E0E0)` | 线条颜色               |
+| `dashLength` | `double` | 0.0                 | 虚线长度（0 表示实线） |
+| `space`      | `double` | 0.0                 | 虚线间隔               |
 
 ## 定制化配置
 
@@ -305,6 +307,8 @@ cd example
 flutter pub get
 flutter run
 ```
+
+![Meditation Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/example.png)
 
 ## 贡献代码
 

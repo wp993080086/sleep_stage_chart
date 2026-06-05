@@ -1,4 +1,4 @@
-import 'dart:math' as _math;
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'model.dart';
@@ -736,7 +736,7 @@ class _TooltipPositionerState extends State<_TooltipPositioner> {
     }
 
     // 取较大宽度加上内边距
-    final maxTextWidth = _math.max(primaryWidth, secondaryWidth);
+    final maxTextWidth = math.max(primaryWidth, secondaryWidth);
     return maxTextWidth + horizontalPadding;
   }
 

@@ -148,7 +148,8 @@ class _SleepNapChartCardState extends State<SleepNapChartCard> {
                   _buildTimeLabel('07:50'),
                 ],
                 onStageChanged: (stage) {
-                  print('${stage.type.title} ${stage.duration.inMinutes}分钟');
+                  debugPrint(
+                      '${stage.type.title} ${stage.duration.inMinutes}分钟');
                 },
               ),
             ),

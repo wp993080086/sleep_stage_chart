@@ -43,6 +43,8 @@ Support sleep stage chart and meditation chart.
 
 ![Sleep Stage Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/sleep-tooltip.png)
 
+![Sleep Nap Stage Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/sleep-nap-tooltip.png)
+
 ```dart
 import 'package:flutter/material.dart';
 import 'package:sleep_stage_chart/sleep_stage_chart.dart';
@@ -176,42 +178,42 @@ The main widget for displaying sleep stage charts.
 
 #### Properties
 
-| Property Name | Type | Default Value | Description |
-| --- | --- | --- | --- |
-| `data` | `List<SleepStageChartSegment>` | - | Sleep stage data list (required) |
-| `dateFrom` | `DateTime` | - | Chart start time (required) |
-| `dateTo` | `DateTime` | - | Chart end time (required) |
-| `stageHeightRatio` | `double` | - | Height ratio of each stage block, range [0, 0.25] |
-| `stageVerticalGapRatio` | `double` | - | Vertical gap ratio between stages, range [0, 1.0] |
-| `backgroundColor` | `Color` | - | Background color (required) |
-| `borderRadius` | `double` | 4.0 | Border radius of stage blocks |
-| `connectorLineWidth` | `double` | 1.0 | Width of connector lines between adjacent blocks |
-| `horizontalLineStyle` | `SleepStageChartLineStyle` | `defaultLineStyle` | Horizontal grid line style |
-| `verticalLineStyle` | `SleepStageChartLineStyle` | `defaultLineStyle` | Vertical grid line style |
-| `horizontalNodes` | `List<double>` | `[]` | Horizontal line positions, range [0.0, 1.0] |
-| `verticalNodes` | `List<double>` | `[]` | Vertical line positions, range [0.0, 1.0] |
-| `verticalLineVisible` | `bool` | true | Whether to show vertical grid lines |
-| `horizontalLineVisible` | `bool` | true | Whether to show horizontal grid lines |
-| `hasTooltip` | `bool` | true | Whether to show tooltip |
-| `hasTooltipIndicator` | `bool` | true | Whether to show tooltip indicator (vertical line) |
-| `tooltipOffset` | `double` | 0.0 | Tooltip vertical offset |
-| `tooltipPadding` | `EdgeInsetsGeometry?` | `EdgeInsets.symmetric(horizontal: 12, vertical: 6)` | Tooltip padding |
-| `tooltipBackgroundColor` | `Color?` | null | Tooltip background color (defaults to stage color) |
-| `tooltipBorderRadius` | `double` | 12.0 | Tooltip border radius |
-| `tooltipPrimaryTextStyleBig` | `TextStyle?` | null | Primary text large style (large part of duration) |
-| `tooltipPrimaryTextStyleSmall` | `TextStyle?` | null | Primary text small style (small part of duration) |
-| `tooltipSecondaryTextStyle` | `TextStyle?` | null | Secondary text style (stage name and time) |
-| `hasTitleHump` | `bool` | true | Whether title uses hump style (alternating large/small text) |
-| `allDayMode` | `bool` | false | All-day mode (single centered block) |
-| `allDayColor` | `Color?` | `Color(0xFF43CAC4)` | Color for all-day mode |
-| `stageColors` | `Map<SleepStageTypeEnum, Color>?` | null | Custom stage colors |
-| `stageOrder` | `List<SleepStageTypeEnum>?` | `[awake, core, rem, deep]` | Stage display order |
-| `footerHeight` | `double` | 40.0 | Footer area height |
-| `footerChildren` | `List<Widget>` | `[]` | Footer child widgets |
-| `onStageChanged` | `void Function(SleepStageChartSegment)?` | null | Callback when indicator points to different stage |
-| `onIndicatorMove` | `void Function(SleepStageChartSegment)?` | null | Callback when indicator moves |
-| `onIndicatorLongPress` | `void Function(SleepStageChartSegment)?` | null | Callback when indicator is long pressed |
-| `onStageTap` | `void Function(SleepStageChartSegment)?` | null | Callback when stage block is tapped |
+| Property Name                  | Type                                     | Default Value                                       | Description                                                  |
+| ------------------------------ | ---------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------ |
+| `data`                         | `List<SleepStageChartSegment>`           | -                                                   | Sleep stage data list (required)                             |
+| `dateFrom`                     | `DateTime`                               | -                                                   | Chart start time (required)                                  |
+| `dateTo`                       | `DateTime`                               | -                                                   | Chart end time (required)                                    |
+| `stageHeightRatio`             | `double`                                 | -                                                   | Height ratio of each stage block, range [0, 0.25]            |
+| `stageVerticalGapRatio`        | `double`                                 | -                                                   | Vertical gap ratio between stages, range [0, 1.0]            |
+| `backgroundColor`              | `Color`                                  | -                                                   | Background color (required)                                  |
+| `borderRadius`                 | `double`                                 | 4.0                                                 | Border radius of stage blocks                                |
+| `connectorLineWidth`           | `double`                                 | 1.0                                                 | Width of connector lines between adjacent blocks             |
+| `horizontalLineStyle`          | `SleepStageChartLineStyle`               | `defaultLineStyle`                                  | Horizontal grid line style                                   |
+| `verticalLineStyle`            | `SleepStageChartLineStyle`               | `defaultLineStyle`                                  | Vertical grid line style                                     |
+| `horizontalNodes`              | `List<double>`                           | `[]`                                                | Horizontal line positions, range [0.0, 1.0]                  |
+| `verticalNodes`                | `List<double>`                           | `[]`                                                | Vertical line positions, range [0.0, 1.0]                    |
+| `verticalLineVisible`          | `bool`                                   | true                                                | Whether to show vertical grid lines                          |
+| `horizontalLineVisible`        | `bool`                                   | true                                                | Whether to show horizontal grid lines                        |
+| `hasTooltip`                   | `bool`                                   | true                                                | Whether to show tooltip                                      |
+| `hasTooltipIndicator`          | `bool`                                   | true                                                | Whether to show tooltip indicator (vertical line)            |
+| `tooltipOffset`                | `double`                                 | 0.0                                                 | Tooltip vertical offset                                      |
+| `tooltipPadding`               | `EdgeInsetsGeometry?`                    | `EdgeInsets.symmetric(horizontal: 12, vertical: 6)` | Tooltip padding                                              |
+| `tooltipBackgroundColor`       | `Color?`                                 | null                                                | Tooltip background color (defaults to stage color)           |
+| `tooltipBorderRadius`          | `double`                                 | 12.0                                                | Tooltip border radius                                        |
+| `tooltipPrimaryTextStyleBig`   | `TextStyle?`                             | null                                                | Primary text large style (large part of duration)            |
+| `tooltipPrimaryTextStyleSmall` | `TextStyle?`                             | null                                                | Primary text small style (small part of duration)            |
+| `tooltipSecondaryTextStyle`    | `TextStyle?`                             | null                                                | Secondary text style (stage name and time)                   |
+| `hasTitleHump`                 | `bool`                                   | true                                                | Whether title uses hump style (alternating large/small text) |
+| `allDayMode`                   | `bool`                                   | false                                               | All-day mode (single centered block)                         |
+| `allDayColor`                  | `Color?`                                 | `Color(0xFF43CAC4)`                                 | Color for all-day mode                                       |
+| `stageColors`                  | `Map<SleepStageTypeEnum, Color>?`        | null                                                | Custom stage colors                                          |
+| `stageOrder`                   | `List<SleepStageTypeEnum>?`              | `[awake, core, rem, deep]`                          | Stage display order                                          |
+| `footerHeight`                 | `double`                                 | 40.0                                                | Footer area height                                           |
+| `footerChildren`               | `List<Widget>`                           | `[]`                                                | Footer child widgets                                         |
+| `onStageChanged`               | `void Function(SleepStageChartSegment)?` | null                                                | Callback when indicator points to different stage            |
+| `onIndicatorMove`              | `void Function(SleepStageChartSegment)?` | null                                                | Callback when indicator moves                                |
+| `onIndicatorLongPress`         | `void Function(SleepStageChartSegment)?` | null                                                | Callback when indicator is long pressed                      |
+| `onStageTap`                   | `void Function(SleepStageChartSegment)?` | null                                                | Callback when stage block is tapped                          |
 
 ### SleepStageChartSegment
 
@@ -219,14 +221,14 @@ Represents a single sleep stage period.
 
 #### Properties
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `type` | `SleepStageTypeEnum` | Sleep stage type |
-| `start` | `DateTime` | Stage start time |
-| `end` | `DateTime` | Stage end time |
-| `titles` | `List<String>` | Main title list (for Tooltip display) |
-| `subtitle` | `String?` | Subtitle (for Tooltip display) |
-| `duration` | `Duration` | Duration (getter, calculated from start and end) |
+| Property   | Type                 | Description                                      |
+| ---------- | -------------------- | ------------------------------------------------ |
+| `type`     | `SleepStageTypeEnum` | Sleep stage type                                 |
+| `start`    | `DateTime`           | Stage start time                                 |
+| `end`      | `DateTime`           | Stage end time                                   |
+| `titles`   | `List<String>`       | Main title list (for Tooltip display)            |
+| `subtitle` | `String?`            | Subtitle (for Tooltip display)                   |
+| `duration` | `Duration`           | Duration (getter, calculated from start and end) |
 
 ### SleepStageTypeEnum
 
@@ -245,12 +247,12 @@ Defines the style of grid lines.
 
 #### Properties
 
-| Property | Type | Default | Description |
-| --- | --- | --- | --- |
-| `width` | `double` | 1.0 | Line width |
-| `color` | `Color` | `Color(0xFFE0E0E0)` | Line color |
-| `dashLength` | `double` | 0.0 | Dash length (0 for solid line) |
-| `space` | `double` | 0.0 | Space between dashes |
+| Property     | Type     | Default             | Description                    |
+| ------------ | -------- | ------------------- | ------------------------------ |
+| `width`      | `double` | 1.0                 | Line width                     |
+| `color`      | `Color`  | `Color(0xFFE0E0E0)` | Line color                     |
+| `dashLength` | `double` | 0.0                 | Dash length (0 for solid line) |
+| `space`      | `double` | 0.0                 | Space between dashes           |
 
 ## Customization
 
@@ -307,6 +309,8 @@ cd example
 flutter pub get
 flutter run
 ```
+
+![Meditation Chart Example](https://raw.githubusercontent.com/wp993080086/sleep_stage_chart/refs/heads/master/doc/images/example.png)
 
 ## Contributing
 
