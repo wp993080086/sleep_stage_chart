@@ -5,6 +5,7 @@
 * Add nap display effect.
 * Fix color block gap issues.
 * Optimize example code.
+* More customizable titles and subtitles, Supports hump mode.
 
 # 1.1.2
 

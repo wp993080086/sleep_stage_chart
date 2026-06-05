@@ -54,16 +54,22 @@ class SleepChartExample extends StatelessWidget {
         type: SleepStageTypeEnum.awake,
         start: DateTime(2025, 1, 1, 22, 30),
         end: DateTime(2025, 1, 1, 22, 45),
+        titles: const ['清醒'],
+        subtitle: '22:30-22:45',
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.core,
         start: DateTime(2025, 1, 1, 22, 45),
         end: DateTime(2025, 1, 1, 23, 45),
+        titles: const ['核心'],
+        subtitle: '22:45-23:45',
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.deep,
         start: DateTime(2025, 1, 1, 23, 45),
         end: DateTime(2025, 1, 2, 1, 15),
+        titles: const ['深度'],
+        subtitle: '23:45-01:15',
       ),
       // 可添加更多睡眠阶段数据...
     ];
@@ -118,11 +124,15 @@ class MeditationChartExample extends StatelessWidget {
         type: SleepStageTypeEnum.inBed,
         start: dayStart,
         end: dayStart.add(const Duration(minutes: 45)),
+        titles: const ['冥想'],
+        subtitle: '06:00-06:45',
       ),
       SleepStageChartSegment(
         type: SleepStageTypeEnum.inBed,
         start: dayStart.add(const Duration(hours: 2)),
         end: dayStart.add(const Duration(hours: 3, minutes: 15)),
+        titles: const ['冥想'],
+        subtitle: '08:00-09:15',
       ),
     ];
 
@@ -137,7 +147,6 @@ class MeditationChartExample extends StatelessWidget {
         stageVerticalGapRatio: 0,
         backgroundColor: Colors.transparent,
         borderRadius: 8,
-        stageNameFormatter: (_) => '冥想',
         horizontalLineVisible: false,
         verticalNodes: const [0.0, 0.25, 0.5, 0.75, 1.0],
         allDayMode: true,
@@ -187,14 +196,14 @@ class MeditationChartExample extends StatelessWidget {
 | `tooltipPadding` | `EdgeInsetsGeometry?` | `EdgeInsets.symmetric(horizontal: 12, vertical: 6)` | Tooltip 内边距 |
 | `tooltipBackgroundColor` | `Color?` | null | Tooltip 背景颜色（默认使用阶段颜色） |
 | `tooltipBorderRadius` | `double` | 12.0 | Tooltip 圆角半径 |
-| `tooltipPrimaryTextStyle` | `TextStyle?` | null | 主文字样式（持续时长） |
+| `tooltipPrimaryTextStyleBig` | `TextStyle?` | null | 主文字大字号样式（持续时长大字号部分） |
+| `tooltipPrimaryTextStyleSmall` | `TextStyle?` | null | 主文字小字号样式（持续时长小字号部分） |
 | `tooltipSecondaryTextStyle` | `TextStyle?` | null | 次文字样式（阶段名称和时间范围） |
+| `hasTitleHump` | `bool` | true | 标题是否使用驼峰样式（大小文字交替） |
 | `allDayMode` | `bool` | false | 全天模式（单个居中色块） |
 | `allDayColor` | `Color?` | `Color(0xFF43CAC4)` | 全天模式下的色块颜色 |
 | `stageColors` | `Map<SleepStageTypeEnum, Color>?` | null | 自定义阶段颜色 |
 | `stageOrder` | `List<SleepStageTypeEnum>?` | `[awake, core, rem, deep]` | 阶段显示顺序 |
-| `dateFormatter` | `String Function(DateTime)?` | null | 日期格式化函数 |
-| `stageNameFormatter` | `String Function(SleepStageTypeEnum)?` | null | 阶段名称格式化函数 |
 | `footerHeight` | `double` | 40.0 | 底部区域高度 |
 | `footerChildren` | `List<Widget>` | `[]` | 底部子组件列表 |
 | `onStageChanged` | `void Function(SleepStageChartSegment)?` | null | 指示器指向不同阶段时的回调 |
@@ -213,6 +222,8 @@ class MeditationChartExample extends StatelessWidget {
 | `type` | `SleepStageTypeEnum` | 睡眠阶段类型 |
 | `start` | `DateTime` | 阶段开始时间 |
 | `end` | `DateTime` | 阶段结束时间 |
+| `titles` | `List<String>` | 主标题列表（用于 Tooltip 显示） |
+| `subtitle` | `String?` | 副标题（用于 Tooltip 显示） |
 | `duration` | `Duration` | 持续时长（getter，由 start 和 end 计算） |
 
 ### SleepStageTypeEnum
@@ -280,22 +291,6 @@ SleepStageChart(
   ),
   horizontalLineVisible: true,
   verticalLineVisible: true,
-)
-```
-
-### 文本格式化
-
-自定义日期和时间的展示格式：
-
-```dart
-SleepStageChart(
-  // ... 其他属性
-  dateFormatter: (DateTime date) {
-    return '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-  },
-  stageNameFormatter: (SleepStageTypeEnum type) {
-    return type.title; // 或自定义映射
-  },
 )
 ```
 

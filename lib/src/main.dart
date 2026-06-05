@@ -115,7 +115,10 @@ class SleepStageChart extends StatefulWidget {
   final double tooltipBorderRadius;
 
   /// 主文字样式（持续时长），默认白色 16px 加粗
-  final TextStyle? tooltipPrimaryTextStyle;
+  final TextStyle? tooltipPrimaryTextStyleBig;
+
+  /// 主文字样式（持续时长），默认白色 16px 加粗
+  final TextStyle? tooltipPrimaryTextStyleSmall;
 
   /// 次文字样式（阶段名称和时间范围），默认白色 13px 中等粗细
   final TextStyle? tooltipSecondaryTextStyle;
@@ -212,7 +215,8 @@ class SleepStageChart extends StatefulWidget {
     this.tooltipPadding,
     this.tooltipBackgroundColor,
     this.tooltipBorderRadius = 12.0,
-    this.tooltipPrimaryTextStyle,
+    this.tooltipPrimaryTextStyleBig,
+    this.tooltipPrimaryTextStyleSmall,
     this.tooltipSecondaryTextStyle,
     this.hasTitleHump = true,
     this.footerHeight = 40.0,
@@ -527,8 +531,8 @@ class _SleepStageChartState extends State<SleepStageChart> {
             tooltipPadding: widget.tooltipPadding,
             tooltipBackgroundColor: widget.tooltipBackgroundColor,
             tooltipBorderRadius: widget.tooltipBorderRadius,
-            tooltipPrimaryTextStyleBig: widget.tooltipPrimaryTextStyle,
-            tooltipPrimaryTextStyleSmall: widget.tooltipPrimaryTextStyle,
+            tooltipPrimaryTextStyleBig: widget.tooltipPrimaryTextStyleBig,
+            tooltipPrimaryTextStyleSmall: widget.tooltipPrimaryTextStyleSmall,
             tooltipSecondaryTextStyle: widget.tooltipSecondaryTextStyle,
           ),
         ),
